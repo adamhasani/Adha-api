@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <title>Ada API Console</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta
+    name="description"
+    content="Konsol dokumentasi & pengujian untuk Ada API."
+  />
+
+  <!-- Bootstrap & Font Awesome -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+  />
+
+  <!-- Fonts -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600&family=Playfair+Display:wght@500;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <link rel="stylesheet" href="/styles.css" />
+</head>
+<body>
+  <!-- Cursor Glow -->
+  <div id="cursorGlow" class="cursor-glow"></div>
+
+  <!-- SIDEBAR -->
+  <nav class="side-nav">
+    <div class="side-nav-logo">
+      <div class="logo-frame">
+        <img src="/src/icon.png" alt="Ada API" class="logo-img" />
+      </div>
+      <div class="brand-block">
+        <div class="brand-mark">ADA API</div>
+        <div class="brand-subtext">Private AI Console</div>
+      </div>
+    </div>
+
+    <div class="side-nav-links">
+      <a href="#hero" class="side-nav-link active">
+        <i class="fa-solid fa-house"></i>
+        <span>Beranda</span>
+      </a>
+      <a href="#collection" class="side-nav-link">
+        <i class="fa-solid fa-layer-group"></i>
+        <span>Koleksi Endpoint</span>
+      </a>
+      <a href="#request" class="side-nav-link">
+        <i class="fa-solid fa-paper-plane"></i>
+        <span>Request Khusus</span>
+      </a>
+      <a href="#history" class="side-nav-link">
+        <i class="fa-solid fa-clock-rotate-left"></i>
+        <span>Riwayat</span>
+      </a>
+      <a href="#logs" class="side-nav-link">
+        <i class="fa-solid fa-terminal"></i>
+        <span>Logs</span>
+      </a>
+    </div>
+
+    <button id="collapseBtn" class="nav-collapse-btn" type="button">
+      <i class="fa-solid fa-chevron-left"></i>
+    </button>
+  </nav>
+
+  <!-- BACKDROP SIDEBAR MOBILE -->
+  <div id="sidebarBackdrop" class="sidebar-backdrop"></div>
+
+  <!-- MAIN WRAPPER -->
+  <div class="main-wrapper">
+    <!-- HEADER -->
+    <header class="main-header">
+      <div class="header-left">
+        <button id="menuToggle" class="menu-toggle" type="button">
+          <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="header-title">Ada API Console</div>
+      </div>
+
+      <div class="header-center">
+        <div class="search-input-group">
+          <i class="fa-solid fa-magnifying-glass search-icon"></i>
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Cari endpoint, deskripsi, atau path…"
+          />
+          <button id="clearSearch" class="search-clear" type="button">
+            Bersihkan
+          </button>
+        </div>
+      </div>
+
+      <div class="header-right">
+        <div class="theme-toggle-group">
+          <div class="theme-label">Mode</div>
+          <div class="toggle-track">
+            <input id="themeToggle" type="checkbox" />
+            <span class="toggle-thumb"></span>
+          </div>
+        </div>
+
+        <div class="preset-group">
+          <div class="theme-label">Tema</div>
+          <select id="themePreset" class="preset-select">
+            <option value="emerald">Emerald Gold</option>
+            <option value="noir">Noir</option>
+            <option value="ivory">Ivory Amber</option>
+            <option value="cyber">Cyber Glow</option>
+            <option value="olive">Olive Night</option>
+          </select>
+        </div>
+      </div>
+    </header>
+
+    <!-- MAIN -->
+    <main>
+      <!-- HERO -->
+      <section id="hero" class="hero-section reveal">
+        <div class="hero-content">
+          <div class="eyebrow-text">SISTEM PRIBADI • API LAB</div>
+          <h1 class="hero-title">Ada API</h1>
+
+          <div class="hero-meta">
+            <span class="badge-pill">Versi <span id="versionBadge">v1.0.0</span></span>
+            <span class="divider-dot">•</span>
+            <span class="hero-meta-text">Console dokumentasi & uji coba cepat</span>
+          </div>
+
+          <p class="hero-description">
+            Kumpulkan, kelola, dan uji semua endpoint API pribadi kamu
+            dalam satu konsol yang rapi. Dirancang untuk workflow pribadi,
+            bukan untuk orang lain.
+          </p>
+
+          <a href="#collection" class="hero-btn">
+            <i class="fa-solid fa-bolt"></i>
+            Lihat Koleksi Endpoint
+          </a>
+
+          <div class="hero-tags">
+            <span class="tag-chip">AI & Tools</span>
+            <span class="tag-chip">Private Endpoint</span>
+            <span class="tag-chip">Prompt Utilities</span>
+          </div>
+        </div>
+
+        <div class="hero-visual">
+          <div id="bannerParallax" class="banner-container-oldmoney">
+            <div class="banner-frame">
+              <img
+                src="/src/banner.gif"
+                alt="Ada API Banner"
+                class="banner-oldmoney"
+              />
+            </div>
+            <div class="banner-overlay-card">
+              <div class="overlay-header">
+                <div>
+                  <div class="overlay-title">PRIVATE CONSOLE</div>
+                  <div class="overlay-sub">Internal Only</div>
+                </div>
+                <div class="overlay-status">
+                  <span class="status-dot"></span>
+                  <span>Online</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- KOLEKSI ENDPOINT -->
+      <section id="collection" class="reveal">
+        <div class="section-header-line">
+          <div>
+            <h2 class="section-title-oldmoney">Koleksi Endpoint</h2>
+            <p class="section-subtitle">
+              Semua endpoint dari konfigurasi konsol kamu akan tampil di sini.
+            </p>
+          </div>
+          <div class="gold-divider"></div>
+        </div>
+
+        <p class="section-description">
+          Gunakan koleksi ini untuk mengatur model AI, randomizer, dan tools lain
+          yang kamu pakai sehari-hari. Klik <strong>Try</strong> untuk melihat respons.
+        </p>
+
+        <div id="apiFilters" class="api-filters"></div>
+
+        <div id="apiContent" class="api-content"></div>
+      </section>
+
+      <!-- REQUEST SECTION -->
+      <section id="request" class="request-section reveal">
+        <div class="section-header-line small">
+          <h3 class="section-title-small">Request Endpoint Khusus</h3>
+          <div class="gold-divider thin"></div>
+        </div>
+
+        <div class="request-api-box">
+          <div class="request-api-header">
+            <h3>Ajukan Endpoint Baru</h3>
+            <p>
+              Tulis deskripsi singkat endpoint yang kamu mau tambahkan.
+              Pesan ini akan dikirim ke WhatsApp kamu.
+            </p>
+          </div>
+
+          <textarea
+            id="apiRequestInput"
+            placeholder="Contoh: tolong buat endpoint untuk generate ide campaign TikTok berdasarkan niche dan budget..."
+          ></textarea>
+
+          <button id="sendApiRequest" type="button">
+            Kirim ke WhatsApp
+          </button>
+        </div>
+      </section>
+
+      <!-- HISTORY SECTION -->
+      <section id="history" class="request-history reveal">
+        <div class="section-header-line small">
+          <h3 class="section-title-small">Riwayat Request Endpoint</h3>
+          <div class="gold-divider thin"></div>
+        </div>
+
+        <ul id="requestHistoryList" class="history-list"></ul>
+      </section>
+
+      <!-- LOGS SECTION -->
+      <section id="logs" class="logs-section reveal">
+        <div class="section-header-line small">
+          <h3 class="section-title-small">Live Logs</h3>
+          <div class="gold-divider thin"></div>
+        </div>
+
+        <pre id="liveLogs" class="logs-console"></pre>
+      </section>
+    </main>
+  </div>
+
+  <!-- MODAL API RESPONSE -->
+  <div
+    class="modal fade"
+    id="apiResponseModal"
+    tabindex="-1"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog modal-lg modal-dialog-centered">
+      <div class="modal-content modal-elegant">
+        <div class="modal-header">
+          <div>
+            <h1 class="modal-title fs-6" id="modalTitle">Respons API</h1>
+            <div id="modalSubtitle" class="modal-subtitle">
+              Deskripsi endpoint…
+            </div>
+          </div>
+          <div class="modal-toolbar">
+            <button
+              id="copyEndpointBtn"
+              type="button"
+              class="btn-ghost small"
+            >
+              Salin Endpoint
+            </button>
+            <button id="copyCurlBtn" type="button" class="btn-ghost small">
+              Salin cURL
+            </button>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+              aria-label="Close"
+            >
+              <i class="fa-solid fa-xmark"></i>
+            </button>
+          </div>
+        </div>
+        <div class="modal-body">
+          <div class="code-block mb-2">
+            <div class="endpoint-label-row">
+              <span class="endpoint-label">Endpoint</span>
+            </div>
+            <div class="endpoint-block">
+              <code id="endpointText"></code>
+            </div>
+            <p id="modalStatusLine" class="modal-status-line"></p>
+            <div id="modalLoading" class="modal-loading d-none">
+              <div class="spinner"></div>
+              <p>Mengambil respons dari server…</p>
+            </div>
+          </div>
+
+          <pre id="apiResponseContent" class="code-block"></pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="/script.js"></script>
+</body>
+</html>

@@ -1,0 +1,98 @@
+{
+  "name": "Ada API UI",
+  "version": "v1.0.0",
+  "description": "Simple and easy to use API console for Ada API.",
+  "bannerImage": "/src/banner.gif",
+  "header": {
+    "status": "Online!"
+  },
+  "apiSettings": {
+    "creator": "Ada",
+    "apikey": ["ada-api"]
+  },
+  "categories": [
+    {
+      "name": "AI (Artificial Intelligence)",
+      "items": [
+        {
+          "name": "LuminAI",
+          "desc": "Talk with LuminAI.",
+          "path": "/luminai?text=halo",
+          "status": "ready",
+          "method": "GET",
+          "params": {
+            "text": "Text chat"
+          }
+        },
+        {
+          "name": "HydroMind",
+          "desc": "Chat AI via HydroMind (Multi Model).",
+          "path": "/hydromind?text=halo&model=gpt-4o",
+          "status": "ready",
+          "method": "GET",
+          "params": {
+            "text": "Teks chat",
+            "model": "Model ID (gpt-4o, dll)"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Downloader",
+      "items": [
+        {
+          "name": "YouTube MP3",
+          "desc": "Download Audio YouTube via Link.",
+          "path": "/ytmp3?url=LINK_YT_DISINI",
+          "status": "ready",
+          "method": "GET",
+          "params": {
+            "url": "Link YouTube"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Random",
+      "items": [
+        {
+          "name": "Blue Archive",
+          "desc": "Random Image Blue Archive (Direct Link)",
+          "path": "/random/ba",
+          "status": "ready",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "Search Tools",
+      "items": [
+        {
+          "name": "YouTube Search",
+          "desc": "Cari video YouTube.",
+          "path": "/ytsearch?q=lofi",
+          "status": "ready",
+          "method": "GET",
+          "params": {
+            "q": "Kata kunci pencarian"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tools",
+      "items": [
+        {
+          "name": "Tourl (Upload)",
+          "desc": "Upload File/Gambar menjadi Link URL.",
+          "path": "/tourl",
+          "status": "ready",
+          "method": "POST",
+          "params": {
+            "file": "Media (Image/Video/Doc)"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -331,56 +331,112 @@ document.addEventListener("DOMContentLoaded", function () {
         addToHistory(api);
     }
 
-    // DETECT MEDIA TYPE
-    function getMediaType(url) {
-        const ext = url.split("?")[0].split(".").pop().toLowerCase();
+    // ===================== MEDIA TYPE DETECTOR (REPLACE OLD) =====================
+function getMediaType(url) {
+    if (!url) return null;
+    const lower = url.split("?")[0].toLowerCase();
 
-        if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
-        if (["mp4", "webm", "mov"].includes(ext)) return "video";
-        if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return "audio";
-        return null;
-    }
-    // ====== PART 4 (baris 301–400) ======
+    if (/\.(png|jpe?g|gif|webp|svg)$/i.test(lower)) return "image";
+    if (/\.(mp4|webm|mov|mkv|avi)$/i.test(lower)) return "video";
+    if (/\.(mp3|wav|ogg|m4a)$/i.test(lower)) return "audio";
 
-    // RUN API REQUEST
-    async function runAPIRequest(api) {
-        const url = api.path;
-        const method = api.method || "GET";
+    return null;
+}
 
-        // MEDIA HANDLING
-        const mediaType = getMediaType(url);
-        if (mediaType) {
-            DOM.modalLoading.classList.add("d-none");
+// Escape HTML utility
+function escapeHtml(str) {
+    return str.replace(/[&<>"']/g, m => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        "\"": "&quot;",
+        "'": "&#39;"
+    }[m]));
+}
 
-            if (mediaType === "image") {
-                let img = document.createElement("img");
-                img.src = url;
-                img.className = "img-fluid rounded shadow-sm";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(img);
+
+// ================= TEXT-ONLY MEDIA PREVIEW (REPLACE OLD showMediaPreview) =================
+async function showMediaPreview(url) {
+
+    DOM.modalContent.innerHTML = `
+        <div><strong>Media detected</strong></div>
+        <div class="small text-muted">URL: ${escapeHtml(url)}</div>
+        <div id="mediaMetaStatus" class="small text-muted mt-2">Mengambil metadata…</div>
+    `;
+
+    try {
+        // Abort previous fetch
+        try { if (currentFetchController) currentFetchController.abort(); } catch (e) {}
+
+        currentFetchController = new AbortController();
+        const signal = currentFetchController.signal;
+
+        let metaOK = false;
+
+        // Try HEAD first
+        try {
+            const res = await fetch(url, { method: "HEAD", signal });
+            if (res.ok) {
+                const ct = res.headers.get("content-type") || "unknown";
+                const cl = res.headers.get("content-length") || null;
+
+                document.getElementById("mediaMetaStatus").textContent =
+                    `Content-Type: ${ct}${cl ? " · Size: " + formatBytes(cl) : ""} (HEAD)`;
+
+                metaOK = true;
             }
+        } catch (e) {}
 
-            if (mediaType === "video") {
-                let vid = document.createElement("video");
-                vid.src = url;
-                vid.controls = true;
-                vid.className = "w-100 rounded shadow-sm";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(vid);
+        // If HEAD fails → fallback to ranged GET
+        if (!metaOK) {
+            try {
+                const res = await fetch(url, {
+                    method: "GET",
+                    headers: { Range: "bytes=0-0" },
+                    signal
+                });
+
+                const ct = res.headers.get("content-type") || "unknown";
+                const cl = res.headers.get("content-length") || null;
+
+                document.getElementById("mediaMetaStatus").textContent =
+                    `Content-Type: ${ct}${cl ? " · Size: " + formatBytes(cl) : ""} (Ranged GET)`;
+
+            } catch (e) {
+                document.getElementById("mediaMetaStatus").textContent =
+                    `Tidak bisa mengambil metadata (CORS atau server menolak).`;
             }
-
-            if (mediaType === "audio") {
-                let aud = document.createElement("audio");
-                aud.src = url;
-                aud.controls = true;
-                aud.className = "w-100";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(aud);
-            }
-
-            DOM.modalStatus.innerHTML = `<span class='text-success fw-bold'>Media Loaded</span>`;
-            return;
         }
+    } catch (err) {
+        if (err.name === "AbortError") {
+            document.getElementById("mediaMetaStatus").textContent = "Dibatalkan.";
+        } else {
+            document.getElementById("mediaMetaStatus").textContent = "Gagal mengambil metadata.";
+        }
+    }
+
+    function formatBytes(bytes) {
+        if (!bytes) return "unknown";
+        const sizes = ["B", "KB", "MB", "GB"];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return (bytes / Math.pow(1024, i)).toFixed(1) + " " + sizes[i];
+    }
+}
+
+
+// ===================== REPLACE MEDIA HANDLING BLOCK IN runAPIRequest =====================
+const mediaType = getMediaType(url);
+if (mediaType) {
+
+    DOM.modalLoading.classList.add("d-none");
+
+    DOM.modalStatus.innerHTML =
+        `<span class='text-success fw-bold'>Media detected: ${mediaType}</span>`;
+
+    await showMediaPreview(url);
+
+    return;
+}
 
         // NORMAL JSON REQUEST
         try {

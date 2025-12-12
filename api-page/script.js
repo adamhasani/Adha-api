@@ -1,17 +1,8 @@
 /**
- * ADA API CONSOLE - MAIN SCRIPT (FULL EXTENDED EDITION)
- * -----------------------------------------------------
- * Version: 2.5.0 (Ultimate)
- * Features:
- * - Dynamic Sidebar & Theme Engine
- * - Smart Search & Filtering
- * - LocalStorage Favorites & History
- * - Smart API Request Handling (GET/POST/PUT/DELETE)
- * - Auto File Upload Detection
- * - Multi-MIME Type Rendering (Image, Audio, Video, JSON)
- * - Auto Domain Prefixing for Copy
- * - Custom Toast Notifications
- * - Parallax & Visual Effects
+ * ADA API CONSOLE - MAIN SCRIPT (FIXED)
+ * - Removed inline rendering for image/audio/video to avoid scroll/stuck issues
+ * - Added modal cleanup on close (removes backdrops, modal-open class, clears content)
+ * - Keeps JSON/text rendering and minimal download/redirect info
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -649,74 +640,84 @@ document.addEventListener("DOMContentLoaded", () => {
                 `;
             }
 
-            // === RENDER LOGIC ===
-            
-            // 1. IMAGE
-            if (contentType && contentType.includes("image")) {
-                const blob = await response.blob();
-                const imgUrl = URL.createObjectURL(blob);
+            // === RENDER LOGIC (NO image/audio/video embedding) ===
+            // We intentionally REMOVE inline rendering of image/audio/video to prevent modal/page from freezing
+            // If response is binary (image/audio/video), we show a short message with an option to download (textual link).
+            if (contentType && (contentType.includes("image") || contentType.includes("audio") || contentType.includes("video"))) {
+                // Provide small informational panel and offer to download the binary as a file (without embedding)
                 renderHtml += `
-                    <div class="text-center bg-dark p-3 rounded">
-                        <img src="${imgUrl}" class="img-fluid" style="max-height: 400px;" alt="Response Image">
+                    <div class="alert alert-warning">
+                        <strong>Binary response omitted.</strong><br>
+                        The response is a binary media (${contentType}). To avoid UI freezes we don't render media inline in the modal.
                     </div>
-                    <div class="text-center mt-2 text-muted small">Image Blob Rendered</div>
-                `;
-            } 
-            // 2. AUDIO
-            else if (contentType && contentType.includes("audio")) {
-                const blob = await response.blob();
-                const audioUrl = URL.createObjectURL(blob);
-                renderHtml += `
-                    <div class="text-center p-4 bg-light rounded">
-                        <i class="fas fa-music fa-3x mb-3 text-secondary"></i><br>
-                        <audio controls class="w-100">
-                            <source src="${audioUrl}" type="${contentType}">
-                            Your browser does not support audio element.
-                        </audio>
+                    <div class="mb-2">
+                        <button id="downloadBinaryBtn" class="btn btn-sm btn-outline-primary">Download file</button>
+                        <small class="text-muted ms-2">(will trigger download)</small>
                     </div>
+                    <div id="binaryDownloadStatus" class="small text-muted mt-2"></div>
                 `;
-            }
-            // 3. VIDEO
-            else if (contentType && contentType.includes("video")) {
-                const blob = await response.blob();
-                const videoUrl = URL.createObjectURL(blob);
-                renderHtml += `
-                    <div class="ratio ratio-16x9">
-                        <video controls>
-                            <source src="${videoUrl}" type="${contentType}">
-                        </video>
-                    </div>
-                `;
-            }
-            // 4. JSON / TEXT
-            else {
-                const textData = await response.text();
-                
-                // Try Parse JSON
-                try {
-                    const jsonObj = JSON.parse(textData);
-                    
-                    // Special Handling for 'Tourl' / Upload Response (Detect URL)
-                    if (jsonObj.result && jsonObj.result.url) {
-                        renderHtml += `
-                            <div class="card border-success mb-3">
-                                <div class="card-header bg-success text-white">Upload Success!</div>
-                                <div class="card-body">
-                                    <p>URL: <a href="${jsonObj.result.url}" target="_blank" class="fw-bold text-decoration-underline">${jsonObj.result.url}</a></p>
-                                    ${jsonObj.result.mime && jsonObj.result.mime.includes('image') ? `<img src="${jsonObj.result.url}" style="height: 100px;" class="rounded border">` : ''}
-                                </div>
-                            </div>
-                        `;
-                    }
 
-                    // Standard Beautified JSON
-                    const prettyJson = JSON.stringify(jsonObj, null, 2);
-                    renderHtml += `<pre class="json-response p-3 rounded" style="background: #1e1e1e; color: #d4d4d4; overflow: auto; max-height: 400px;"><code>${prettyJson}</code></pre>`;
+                resultContainer.innerHTML = renderHtml;
+
+                // Bind Download Button: perform fetch as blob and trigger download (user-initiated)
+                const downloadBtn = document.getElementById("downloadBinaryBtn");
+                const downloadStatus = document.getElementById("binaryDownloadStatus");
+                downloadBtn.addEventListener("click", async () => {
+                    downloadStatus.textContent = "Mempersiapkan download...";
+                    try {
+                        const blobResp = await fetch(url);
+                        if (!blobResp.ok) throw new Error(`Download failed: ${blobResp.status}`);
+                        const blob = await blobResp.blob();
+                        // Create temp link and download
+                        const a = document.createElement("a");
+                        const objectUrl = URL.createObjectURL(blob);
+                        a.href = objectUrl;
+                        // try to name file intelligently
+                        const ext = contentType.split("/").pop().split(";")[0];
+                        const filename = `downloaded-file.${ext}`;
+                        a.download = filename;
+                        document.body.appendChild(a);
+                        a.click();
+                        a.remove();
+                        // revoke after short delay
+                        setTimeout(() => URL.revokeObjectURL(objectUrl), 2000);
+                        downloadStatus.textContent = "Download dimulai.";
+                    } catch (err) {
+                        downloadStatus.textContent = "Gagal mengunduh: " + err.message;
+                    }
+                });
+
+                appendLog(`[RES] ${response.status} (binary omitted)`);
+                return; // done
+            }
+
+            // 4. JSON / TEXT (normal path)
+            const textData = await response.text();
+            
+            // Try Parse JSON
+            try {
+                const jsonObj = JSON.parse(textData);
                 
-                } catch (e) {
-                    // Plain Text
-                    renderHtml += `<pre class="p-3 bg-light border rounded">${textData}</pre>`;
+                // Special Handling for 'Tourl' / Upload Response (Detect URL)
+                if (jsonObj.result && jsonObj.result.url) {
+                    renderHtml += `
+                        <div class="card border-success mb-3">
+                            <div class="card-header bg-success text-white">Upload Success!</div>
+                            <div class="card-body">
+                                <p>URL: <a href="${jsonObj.result.url}" target="_blank" class="fw-bold text-decoration-underline">${jsonObj.result.url}</a></p>
+                                <!-- Removed inline image preview to avoid freezing -->
+                            </div>
+                        </div>
+                    `;
                 }
+
+                // Standard Beautified JSON
+                const prettyJson = JSON.stringify(jsonObj, null, 2);
+                renderHtml += `<pre class="json-response p-3 rounded" style="background: #1e1e1e; color: #d4d4d4; overflow: auto; max-height: 400px;"><code>${prettyJson}</code></pre>`;
+            
+            } catch (e) {
+                // Plain Text
+                renderHtml += `<pre class="p-3 bg-light border rounded" style="max-height: 400px; overflow:auto;">${textData}</pre>`;
             }
 
             resultContainer.innerHTML = renderHtml;
@@ -738,8 +739,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     // ================================================================
-    // 10. MODAL EVENTS (COPY, CURL, ETC)
+    // 10. MODAL EVENTS (COPY, CURL, ETC) + CLEANUP
     // ================================================================
+    // Cleanup function to ensure modal doesn't leave page stuck (backdrop/modal-open)
+    function cleanupModal() {
+        try {
+            // Clear modal content
+            if (DOM.apiResponseContent) DOM.apiResponseContent.innerHTML = "";
+
+            // Hide loader
+            if (DOM.modalLoading) DOM.modalLoading.classList.add("d-none");
+
+            // Remove any lingering backdrops (Bootstrap sometimes leaves them if closed programmatically)
+            const backdrops = document.querySelectorAll('.modal-backdrop');
+            backdrops.forEach(b => b.remove());
+
+            // Remove modal-open class from body to restore scrolling
+            document.body.classList.remove('modal-open');
+
+            // Remove inline style overflow hidden if present
+            document.body.style.overflow = '';
+
+            appendLog("Modal cleaned up.");
+        } catch (err) {
+            console.warn("Cleanup modal failed:", err);
+        }
+    }
+
+    // Hook cleanup when modal hides
+    if (DOM.modalEl) {
+        DOM.modalEl.addEventListener('hidden.bs.modal', () => {
+            cleanupModal();
+            // reset current item
+            currentApiItem = null;
+        });
+
+        // Also when modal is about to hide, ensure loader stops
+        DOM.modalEl.addEventListener('hide.bs.modal', () => {
+            if (DOM.modalLoading) DOM.modalLoading.classList.add("d-none");
+        });
+    }
 
     function initModalActions() {
         // A. COPY ENDPOINT (Auto Domain Prefix)
@@ -788,7 +827,6 @@ document.addEventListener("DOMContentLoaded", () => {
     // ================================================================
     // 11. VISUAL EFFECTS (PARALLAX & CURSOR)
     // ================================================================
-
     function initVisualEffects() {
         // Banner Parallax
         if (DOM.bannerParallax) {

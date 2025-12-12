@@ -43,7 +43,7 @@
         {
           "name": "YouTube MP3",
           "desc": "Download Audio YouTube via Link.",
-          "path": "/ytmp3?url=LINK_YT_DISINI",
+          "path": "/ytmp3?url=https://youtu.be/eP3UsuxK30U?si=0ze419znZcOB7Li3",
           "status": "ready",
           "method": "GET",
           "params": {

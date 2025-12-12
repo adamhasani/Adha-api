@@ -1,817 +1,917 @@
-// ====== PART 1 (baris 1–100) ======
+/**
+ * ADA API CONSOLE - MAIN SCRIPT (FULL EXTENDED EDITION)
+ * -----------------------------------------------------
+ * Version: 2.5.0 (Ultimate)
+ * Features:
+ * - Dynamic Sidebar & Theme Engine
+ * - Smart Search & Filtering
+ * - LocalStorage Favorites & History
+ * - Smart API Request Handling (GET/POST/PUT/DELETE)
+ * - Auto File Upload Detection
+ * - Multi-MIME Type Rendering (Image, Audio, Video, JSON)
+ * - Auto Domain Prefixing for Copy
+ * - Custom Toast Notifications
+ * - Parallax & Visual Effects
+ */
 
-document.addEventListener("DOMContentLoaded", function () {
-    let currentApiItem = null;
-    let settings = null;
-    let favorites = JSON.parse(localStorage.getItem("adaAPI_favorites") || "[]");
-    let historyItems = JSON.parse(localStorage.getItem("adaAPI_history") || "[]");
-
-    // DOM Elements
+document.addEventListener("DOMContentLoaded", () => {
+    
+    // ================================================================
+    // 1. DOM ELEMENTS CACHE
+    // ================================================================
     const DOM = {
+        // Layout
         body: document.body,
+        mainContent: document.querySelector("main"),
+        
+        // Sidebar & Nav
+        sideNav: document.querySelector(".side-nav"),
+        sideNavLinks: document.querySelectorAll(".side-nav-link"),
+        menuToggle: document.getElementById("menuToggle"),
+        navCollapseBtn: document.getElementById("collapseBtn"),
+        sidebarBackdrop: document.getElementById("sidebarBackdrop"),
+        
+        // Search & Filter
+        searchInput: document.getElementById("searchInput"),
+        clearSearch: document.getElementById("clearSearch"),
+        apiFilters: document.getElementById("apiFilters"),
+        
+        // Theme Controls
         themeToggle: document.getElementById("themeToggle"),
-        themeText: document.getElementById("themeText"),
-        sidebar: document.querySelector(".sidebar"),
-        sidebarToggle: document.getElementById("sidebarToggle"),
-        sidebarLinks: document.querySelectorAll(".nav-link"),
-        sidebarOverlay: document.getElementById("sidebarOverlay"),
-        apiList: document.getElementById("apiList"),
-        searchBox: document.getElementById("searchBox"),
-        categoryMenu: document.getElementById("categoryMenu"),
-        modal: document.getElementById("apiResponseModal"),
+        themePreset: document.getElementById("themePreset"),
+        
+        // Content Area
+        apiContent: document.getElementById("apiContent"),
+        versionBadge: document.getElementById("versionBadge"),
+        
+        // Request Box (WhatsApp)
+        apiRequestInput: document.getElementById("apiRequestInput"),
+        sendApiRequest: document.getElementById("sendApiRequest"),
+        
+        // Logs & History
+        logsConsole: document.getElementById("liveLogs"),
+        requestHistoryList: document.getElementById("requestHistoryList"),
+        
+        // Visual Effects
+        bannerParallax: document.getElementById("bannerParallax"),
+        cursorGlow: document.getElementById("cursorGlow"),
+        
+        // MODAL ELEMENTS (Detailed)
+        modalEl: document.getElementById("apiResponseModal"),
         modalTitle: document.getElementById("modalTitle"),
         modalSubtitle: document.getElementById("modalSubtitle"),
-        modalStatus: document.getElementById("modalStatus"),
-        modalLoading: document.getElementById("modalLoading"),
-        modalContent: document.getElementById("modalContent"),
         endpointText: document.getElementById("endpointText"),
+        modalStatusLine: document.getElementById("modalStatusLine"),
+        modalLoading: document.getElementById("modalLoading"),
+        apiResponseContent: document.getElementById("apiResponseContent"),
+        
+        // Action Buttons inside Modal
         copyEndpointBtn: document.getElementById("copyEndpointBtn"),
         copyCurlBtn: document.getElementById("copyCurlBtn"),
-        logs: document.getElementById("liveLogs"),
-        historyList: document.getElementById("historyList"),
-        favoritesSection: document.getElementById("favoritesSection")
+        openNewTabBtn: document.getElementById("openNewTabBtn"), // Kalau ada
     };
 
-    // Bootstrap Modal Instance
-    let modalInstance = bootstrap.Modal.getOrCreateInstance(DOM.modal);
+    // Initialize Bootstrap Modal Wrapper
+    const modalInstance = DOM.modalEl ? new bootstrap.Modal(DOM.modalEl, { keyboard: true }) : null;
 
-    // THEME HANDLING
-    function applyTheme(mode) {
-        document.documentElement.setAttribute("data-theme", mode);
-        DOM.themeText.textContent = mode === "dark" ? "Dark" : "Light";
-        localStorage.setItem("adaAPI_theme", mode);
+    // ================================================================
+    // 2. STATE MANAGEMENT & STORAGE
+    // ================================================================
+    let appSettings = null;
+    let currentApiItem = null;
+    
+    // Load data from LocalStorage with Default Values
+    let userFavorites = loadLocalStorage("ada-api-fav", []);
+    let userHistory = loadLocalStorage("ada-api-history", []);
+    let currentThemeMode = loadLocalStorage("ada-ui-mode", "light");
+    let currentThemePreset = loadLocalStorage("ada-ui-theme", "emerald-gold");
+
+    // Fallback Data if fetch fails
+    const fallbackCategories = [
+        {
+            name: "System",
+            items: [
+                { 
+                    name: "System Status", 
+                    desc: "Check if the API server is reachable.", 
+                    path: "/status", 
+                    method: "GET",
+                    status: "unknown" 
+                }
+            ]
+        }
+    ];
+
+    // ================================================================
+    // 3. UTILITY HELPER FUNCTIONS
+    // ================================================================
+    
+    function loadLocalStorage(key, defaultValue) {
+        try {
+            const data = localStorage.getItem(key);
+            return data ? JSON.parse(data) : defaultValue;
+        } catch (error) {
+            console.error("LocalStorage Error:", error);
+            return defaultValue;
+        }
     }
 
-    // Load saved theme
-    let savedTheme = localStorage.getItem("adaAPI_theme") || "dark";
-    applyTheme(savedTheme);
-
-    DOM.themeToggle.addEventListener("click", () => {
-        let newTheme = document.documentElement.getAttribute("data-theme") === "dark" ? "light" : "dark";
-        applyTheme(newTheme);
-    });
-
-    // SIDEBAR HANDLING
-    function toggleSidebar() {
-        DOM.sidebar.classList.toggle("open");
-        DOM.sidebarOverlay.classList.toggle("show");
+    function saveLocalStorage(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.error("LocalStorage Save Error:", error);
+        }
     }
 
-    DOM.sidebarToggle.addEventListener("click", toggleSidebar);
-    DOM.sidebarOverlay.addEventListener("click", toggleSidebar);
-
-    DOM.sidebarLinks.forEach(link => {
-        link.addEventListener("click", () => {
-            DOM.sidebar.classList.remove("open");
-            DOM.sidebarOverlay.classList.remove("show");
-        });
-    });
-
-    // LOGGING
-    function log(message, type = "info") {
-        if (!DOM.logs) return;
-
-        const line = document.createElement("div");
-        line.className = `log-line log-${type}`;
-        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        DOM.logs.appendChild(line);
-        DOM.logs.scrollTop = DOM.logs.scrollHeight;
+    function getTimestamp() {
+        return new Date().toLocaleTimeString('en-US', { hour12: false });
     }
 
-    // LOAD SETTINGS.JSON
-    fetch("/src/settings.json")
-        .then(res => res.json())
-        .then(data => {
-            settings = data;
-            renderCategories();
-            renderAPIItems();
-            renderFavorites();
-            renderHistory();
-        })
-        .catch(err => log("Gagal memuat settings.json", "error"));
-
-    // CATEGORY FILTER RENDERING
-    function renderCategories() {
-        DOM.categoryMenu.innerHTML = "";
-        // ====== PART 2 (baris 101–200) ======
-
-        settings.categories.forEach(cat => {
-            const btn = document.createElement("button");
-            btn.className = "dropdown-item";
-            btn.textContent = cat.name;
-            btn.addEventListener("click", () => filterByCategory(cat.name));
-            DOM.categoryMenu.appendChild(btn);
-        });
+    function appendLog(message, type = "info") {
+        if (!DOM.logsConsole) return;
+        
+        const logLine = document.createElement("div");
+        logLine.className = `log-line log-${type}`;
+        logLine.innerHTML = `<span class="log-time">[${getTimestamp()}]</span> <span class="log-msg">${message}</span>`;
+        
+        DOM.logsConsole.appendChild(logLine);
+        DOM.logsConsole.scrollTop = DOM.logsConsole.scrollHeight;
     }
 
-    // FILTER BY CATEGORY
-    function filterByCategory(category) {
-        const items = document.querySelectorAll(".api-item");
-
-        items.forEach(item => {
-            if (category === "All" || item.dataset.category === category) {
-                item.classList.remove("d-none");
-            } else {
-                item.classList.add("d-none");
-            }
-        });
+    function beautifyJSON(jsonString) {
+        try {
+            const jsonObj = JSON.parse(jsonString);
+            return JSON.stringify(jsonObj, null, 2);
+        } catch (e) {
+            return jsonString; // Return as text if not valid JSON
+        }
     }
 
-    // SEARCH FILTER
-    DOM.searchBox.addEventListener("input", function () {
-        const q = DOM.searchBox.value.toLowerCase();
-        const items = document.querySelectorAll(".api-item");
+    // --- CUSTOM TOAST NOTIFICATION SYSTEM ---
+    function showToast(message, type = "success") {
+        // Create toast container if not exists
+        let toastContainer = document.getElementById("toast-container");
+        if (!toastContainer) {
+            toastContainer = document.createElement("div");
+            toastContainer.id = "toast-container";
+            toastContainer.style.cssText = "position: fixed; bottom: 20px; right: 20px; z-index: 9999;";
+            document.body.appendChild(toastContainer);
+        }
 
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(q)) {
-                item.classList.remove("d-none");
-            } else {
-                item.classList.add("d-none");
-            }
-        });
-    });
+        const toast = document.createElement("div");
+        toast.className = `toast align-items-center text-white bg-${type === 'success' ? 'success' : 'danger'} border-0 show`;
+        toast.style.marginBottom = "10px";
+        toast.style.padding = "10px 20px";
+        toast.style.borderRadius = "8px";
+        toast.style.boxShadow = "0 4px 6px rgba(0,0,0,0.1)";
+        toast.innerHTML = `<div class="d-flex"><div class="toast-body">${message}</div></div>`;
 
-    // RENDER API ITEMS
-    function renderAPIItems() {
-        DOM.apiList.innerHTML = "";
+        toastContainer.appendChild(toast);
 
-        settings.categories.forEach(cat => {
-            cat.items.forEach(api => {
-                const card = document.createElement("div");
-                card.className = "api-item card shadow-sm p-3";
-                card.dataset.category = cat.name;
+        // Remove after 3 seconds
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
 
-                card.innerHTML = `
-                    <div class="d-flex justify-content-between align-items-start mb-2">
-                        <div>
-                            <h5 class="fw-bold mb-1">${api.name}</h5>
-                            <p class="text-muted small mb-1">${api.desc || "No description"}</p>
-                        </div>
-                        <span class="badge bg-primary">${api.method || "GET"}</span>
-                    </div>
+    // ================================================================
+    // 4. THEME & VISUAL ENGINE
+    // ================================================================
 
-                    <button class="btn btn-sm btn-outline-primary w-100 mb-2 btn-open"
-                        data-name="${api.name}"
-                        data-path="${api.path}"
-                        data-desc="${api.desc || ""}"
-                        data-method="${api.method || "GET"}">
-                        Get API
-                    </button>
+    function initThemeEngine() {
+        // Apply Mode (Light/Dark)
+        applyThemeMode(currentThemeMode);
+        
+        // Apply Preset (Color Scheme)
+        applyThemePreset(currentThemePreset);
 
-                    <button class="btn btn-sm btn-outline-success w-100 mb-2 btn-download"
-                        data-download="${api.path}">
-                        Download
-                    </button>
-
-                    <button class="btn btn-sm btn-outline-warning w-100 btn-fav"
-                        data-path="${api.path}">
-                        ${favorites.includes(api.path) ? "★ Favorited" : "☆ Add Favorite"}
-                    </button>
-                `;
-
-                DOM.apiList.appendChild(card);
+        // Listener: Mode Toggle
+        if (DOM.themeToggle) {
+            DOM.themeToggle.addEventListener("change", (e) => {
+                const newMode = e.target.checked ? "dark" : "light";
+                applyThemeMode(newMode);
             });
-        });
+        }
 
-        attachButtonEvents();
-    }
-
-    // EVENT LISTENERS FOR API BUTTONS
-    function attachButtonEvents() {
-        document.querySelectorAll(".btn-open").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const item = {
-                    name: btn.dataset.name,
-                    path: btn.dataset.path,
-                    desc: btn.dataset.desc,
-                    method: btn.dataset.method
+        // Listener: Preset Select
+        if (DOM.themePreset) {
+            DOM.themePreset.addEventListener("change", (e) => {
+                const selectedValue = e.target.value;
+                // Map select value to internal theme keys
+                const map = {
+                    "emerald": "emerald-gold",
+                    "noir": "noir",
+                    "ivory": "royal-amber",
+                    "cyber": "cyber-glow"
                 };
-                openAPIModal(item);
+                const newPreset = map[selectedValue] || "emerald-gold";
+                applyThemePreset(newPreset);
             });
-        });
-
-        document.querySelectorAll(".btn-download").forEach(btn => {
-            btn.addEventListener("click", () => {
-                const url = btn.dataset.download;
-                window.open(url, "_blank");
-            });
-        });
-
-        document.querySelectorAll(".btn-fav").forEach(btn => {
-            btn.addEventListener("click", () => {
-                toggleFavorite(btn.dataset.path, btn);
-            });
-        });
+        }
     }
 
-    // FAVORITE SYSTEM
-    function toggleFavorite(path, btn) {
-        if (favorites.includes(path)) {
-            favorites = favorites.filter(f => f !== path);
-            btn.textContent = "☆ Add Favorite";
-            log("Dihapus dari favorit: " + path);
+    function applyThemeMode(mode) {
+        currentThemeMode = mode;
+        saveLocalStorage("ada-ui-mode", mode);
+        
+        if (mode === "dark") {
+            DOM.body.classList.add("dark-mode");
+            if (DOM.themeToggle) DOM.themeToggle.checked = true;
         } else {
-            favorites.push(path);
-            btn.textContent = "★ Favorited";
-            log("Ditambahkan ke favorit: " + path);
+            DOM.body.classList.remove("dark-mode");
+            if (DOM.themeToggle) DOM.themeToggle.checked = false;
         }
-
-        localStorage.setItem("adaAPI_favorites", JSON.stringify(favorites));
-        renderFavorites();
+        appendLog(`Theme mode changed to: ${mode}`);
     }
-    // ====== PART 3 (baris 201–300) ======
 
-    // RENDER FAVORITES
-    function renderFavorites() {
-        if (!DOM.favoritesSection) return;
-
-        DOM.favoritesSection.innerHTML = "";
-
-        if (favorites.length === 0) {
-            DOM.favoritesSection.innerHTML =
-                `<p class="text-muted small">Belum ada favorit.</p>`;
-            return;
+    function applyThemePreset(presetKey) {
+        currentThemePreset = presetKey;
+        saveLocalStorage("ada-ui-theme", presetKey);
+        
+        DOM.body.setAttribute("data-theme", presetKey);
+        
+        // Sync Select Box
+        if (DOM.themePreset) {
+            const reverseMap = {
+                "emerald-gold": "emerald",
+                "noir": "noir",
+                "royal-amber": "ivory",
+                "cyber-glow": "cyber"
+            };
+            DOM.themePreset.value = reverseMap[presetKey] || "emerald";
         }
+    }
 
-        favorites.forEach(path => {
-            const match = findAPIByPath(path);
-            if (!match) return;
+    // ================================================================
+    // 5. SIDEBAR & NAVIGATION LOGIC
+    // ================================================================
 
-            const div = document.createElement("div");
-            div.className = "fav-item small shadow-sm p-2 rounded mb-2";
+    function initSidebarLogic() {
+        // Toggle Desktop
+        const toggleSidebar = () => DOM.sideNav.classList.toggle("collapsed");
+        
+        // Toggle Mobile
+        const toggleMobileSidebar = () => {
+            const isOpen = DOM.sideNav.classList.contains("open");
+            if (isOpen) {
+                DOM.sideNav.classList.remove("open");
+                DOM.body.classList.remove("sidebar-open");
+                if (DOM.sidebarBackdrop) DOM.sidebarBackdrop.classList.remove("show");
+            } else {
+                DOM.sideNav.classList.add("open");
+                DOM.body.classList.add("sidebar-open");
+                if (DOM.sidebarBackdrop) DOM.sidebarBackdrop.classList.add("show");
+            }
+        };
 
-            div.innerHTML = `
-                <div class="d-flex justify-content-between align-items-center">
-                    <span class="fw-bold text-truncate" style="max-width:150px;">${match.name}</span>
-                    <button class="btn btn-sm btn-outline-danger btn-remove-fav" data-path="${path}">
-                        Hapus
-                    </button>
-                </div>
-                <small class="text-muted">${match.path}</small>
-            `;
+        // Event Listeners
+        if (DOM.menuToggle) DOM.menuToggle.onclick = () => {
+            if (window.innerWidth < 992) toggleMobileSidebar();
+            else toggleSidebar();
+        };
 
-            DOM.favoritesSection.appendChild(div);
-        });
+        if (DOM.navCollapseBtn) DOM.navCollapseBtn.onclick = toggleSidebar;
+        
+        if (DOM.sidebarBackdrop) DOM.sidebarBackdrop.onclick = toggleMobileSidebar;
 
-        document.querySelectorAll(".btn-remove-fav").forEach(btn => {
-            btn.addEventListener("click", () => {
-                favorites = favorites.filter(f => f !== btn.dataset.path);
-                localStorage.setItem("adaAPI_favorites", JSON.stringify(favorites));
-                renderFavorites();
-                log("Favorit dihapus: " + btn.dataset.path);
+        // Auto close on link click (Mobile)
+        DOM.sideNavLinks.forEach(link => {
+            link.addEventListener("click", () => {
+                if (window.innerWidth < 992) {
+                    DOM.sideNav.classList.remove("open");
+                    DOM.body.classList.remove("sidebar-open");
+                    if (DOM.sidebarBackdrop) DOM.sidebarBackdrop.classList.remove("show");
+                }
             });
         });
     }
 
-    // FIND API ITEM BY PATH
-    function findAPIByPath(path) {
-        for (let cat of settings.categories) {
-            for (let item of cat.items) {
-                if (item.path === path) return item;
-            }
+    // ================================================================
+    // 6. FAVORITES & HISTORY SYSTEM
+    // ================================================================
+
+    function toggleFavorite(path, buttonElement) {
+        const index = userFavorites.indexOf(path);
+        
+        if (index === -1) {
+            // Add to favorites
+            userFavorites.push(path);
+            buttonElement.classList.add("favorited");
+            // Update UI card attribute
+            const card = buttonElement.closest(".api-item");
+            if (card) card.dataset.fav = "1";
+            showToast("Ditambahkan ke Favorit");
+        } else {
+            // Remove from favorites
+            userFavorites.splice(index, 1);
+            buttonElement.classList.remove("favorited");
+            const card = buttonElement.closest(".api-item");
+            if (card) card.dataset.fav = "0";
+            showToast("Dihapus dari Favorit", "danger");
         }
-        return null;
+        
+        saveLocalStorage("ada-api-fav", userFavorites);
     }
 
-    // RENDER HISTORY
-    function renderHistory() {
-        DOM.historyList.innerHTML = "";
-
-        if (historyItems.length === 0) {
-            DOM.historyList.innerHTML =
-                `<p class="text-muted small">Belum ada riwayat request.</p>`;
-            return;
-        }
-
-        historyItems.forEach(entry => {
-            const div = document.createElement("div");
-            div.className = "history-item small shadow-sm rounded p-2 mb-2";
-
-            div.innerHTML = `
-                <div class="fw-bold">${entry.name}</div>
-                <div class="text-muted text-truncate">${entry.path}</div>
-                <div class="small text-muted">${new Date(entry.time).toLocaleString()}</div>
-            `;
-
-            DOM.historyList.appendChild(div);
-        });
-    }
-
-    // ADD TO HISTORY
-    function addToHistory(api) {
-        historyItems.unshift({
-            name: api.name,
-            path: api.path,
+    function addToHistory(apiItem) {
+        // Add new item to start of array
+        userHistory.unshift({
+            name: apiItem.name,
+            path: apiItem.path,
             time: new Date().toISOString()
         });
-
-        if (historyItems.length > 20) {
-            historyItems = historyItems.slice(0, 20);
+        
+        // Limit history to 20 items
+        if (userHistory.length > 20) {
+            userHistory = userHistory.slice(0, 20);
         }
-
-        localStorage.setItem("adaAPI_history", JSON.stringify(historyItems));
-        renderHistory();
+        
+        saveLocalStorage("ada-api-history", userHistory);
+        renderHistoryList();
     }
 
-    // OPEN API MODAL
-    function openAPIModal(api) {
-        currentApiItem = api;
-
-        DOM.modalTitle.textContent = api.name;
-        DOM.modalSubtitle.textContent = api.desc || "";
-        DOM.endpointText.textContent = api.path;
-        DOM.modalContent.textContent = "";
-        DOM.modalStatus.textContent = "";
-        DOM.modalLoading.classList.remove("d-none");
-
-        modalInstance.show();
-
-        runAPIRequest(api);
-        addToHistory(api);
-    }
-
-    // DETECT MEDIA TYPE
-    function getMediaType(url) {
-        const ext = url.split("?")[0].split(".").pop().toLowerCase();
-
-        if (["jpg", "jpeg", "png", "gif", "webp"].includes(ext)) return "image";
-        if (["mp4", "webm", "mov"].includes(ext)) return "video";
-        if (["mp3", "wav", "ogg", "m4a"].includes(ext)) return "audio";
-        return null;
-    }
-    // ====== PART 4 (baris 301–400) ======
-
-    // RUN API REQUEST
-    async function runAPIRequest(api) {
-        const url = api.path;
-        const method = api.method || "GET";
-
-        // MEDIA HANDLING
-        const mediaType = getMediaType(url);
-        if (mediaType) {
-            DOM.modalLoading.classList.add("d-none");
-
-            if (mediaType === "image") {
-                let img = document.createElement("img");
-                img.src = url;
-                img.className = "img-fluid rounded shadow-sm";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(img);
-            }
-
-            if (mediaType === "video") {
-                let vid = document.createElement("video");
-                vid.src = url;
-                vid.controls = true;
-                vid.className = "w-100 rounded shadow-sm";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(vid);
-            }
-
-            if (mediaType === "audio") {
-                let aud = document.createElement("audio");
-                aud.src = url;
-                aud.controls = true;
-                aud.className = "w-100";
-                DOM.modalContent.innerHTML = "";
-                DOM.modalContent.appendChild(aud);
-            }
-
-            DOM.modalStatus.innerHTML = `<span class='text-success fw-bold'>Media Loaded</span>`;
+    function renderHistoryList() {
+        if (!DOM.requestHistoryList) return;
+        DOM.requestHistoryList.innerHTML = "";
+        
+        if (userHistory.length === 0) {
+            DOM.requestHistoryList.innerHTML = "<li class='text-muted small p-2'>Belum ada riwayat request.</li>";
             return;
         }
 
-        // NORMAL JSON REQUEST
-        try {
-            const start = performance.now();
-            const response = await fetch(url, { method });
-            const duration = Math.round(performance.now() - start);
-
-            DOM.modalLoading.classList.add("d-none");
-
-            DOM.modalStatus.innerHTML =
-                `<span class='${response.ok ? "text-success" : "text-danger"} fw-bold'>
-                    Status: ${response.status}
-                </span>
-                <span class="text-muted ms-2">(${duration}ms)</span>`;
-
-            const contentType = response.headers.get("content-type") || "";
-
-            if (contentType.includes("application/json")) {
-                const data = await response.json();
-                DOM.modalContent.textContent = JSON.stringify(data, null, 2);
-            } else {
-                let text = await response.text();
-
-                // DETECT 404 HTML PAGE
-                if (/<!doctype html|<html|404/i.test(text)) {
-                    DOM.modalContent.textContent =
-                        "Server mengembalikan HTML (mungkin 404 atau error page).";
-                } else {
-                    DOM.modalContent.textContent = text;
-                }
-            }
-        } catch (err) {
-            DOM.modalLoading.classList.add("d-none");
-            DOM.modalStatus.innerHTML = `<span class="text-danger fw-bold">Request Error</span>`;
-            DOM.modalContent.textContent = err.message || err;
-        }
-    }
-
-    // COPY ENDPOINT
-    DOM.copyEndpointBtn.addEventListener("click", async () => {
-        try {
-            await navigator.clipboard.writeText(DOM.endpointText.textContent);
-            log("Endpoint disalin");
-        } catch {
-            log("Gagal menyalin endpoint", "error");
-        }
-    });
-
-    // COPY CURL
-    DOM.copyCurlBtn.addEventListener("click", async () => {
-        if (!currentApiItem) return;
-
-        const curl = `curl -X ${currentApiItem.method || "GET"} "${currentApiItem.path}"`;
-
-        try {
-            await navigator.clipboard.writeText(curl);
-            log("cURL disalin");
-        } catch {
-            log("Gagal menyalin cURL", "error");
-        }
-    });
-
-    // PARALLAX EFFECT
-    function initParallax() {
-        const banner = document.getElementById("bannerParallax");
-        if (!banner) return;
-
-        window.addEventListener("scroll", () => {
-            const y = window.scrollY;
-            banner.style.transform = `translateY(${y * 0.1}px)`;
+        userHistory.forEach(h => {
+            const li = document.createElement("li");
+            li.className = "history-item";
+            li.innerHTML = `
+                <div class="d-flex justify-content-between align-items-center w-100">
+                    <span class="history-name text-truncate" style="max-width: 150px;">${h.name}</span>
+                    <span class="badge bg-secondary rounded-pill" style="font-size: 0.6rem">GET</span>
+                </div>
+                <div class="history-path text-muted small text-truncate">${h.path}</div>
+            `;
+            DOM.requestHistoryList.appendChild(li);
         });
     }
 
-    // CURSOR GLOW
-    function initCursorGlow() {
-        const glow = document.getElementById("cursorGlow");
-        if (!glow) return;
+    // ================================================================
+    // 7. RENDER API CONTENT & CARDS
+    // ================================================================
 
-        document.addEventListener("mousemove", (e) => {
-            glow.style.left = `${e.clientX - 25}px`;
-            glow.style.top = `${e.clientY - 25}px`;
-        });
-    }
-    // ====== PART 5 (baris 401–500) ======
+    function renderApiContent() {
+        if (!DOM.apiContent) return;
+        
+        // Use settings or fallback
+        const categories = (appSettings && appSettings.categories) ? appSettings.categories : fallbackCategories;
+        
+        // 1. Render Filters
+        renderCategoryFilters(categories);
+        
+        // 2. Render Cards
+        DOM.apiContent.innerHTML = "";
+        const row = document.createElement("div");
+        row.className = "row g-4"; // Bootstrap Grid Gap
 
-    // INITIALIZE APP
-    function initApp() {
-        // Initial parallax & glow
-        initParallax();
-        initCursorGlow();
+        categories.forEach(category => {
+            if (!category.items) return;
+            
+            category.items.forEach(item => {
+                const col = document.createElement("div");
+                col.className = "col-12 col-md-6 col-lg-4 api-item"; // Grid Responsive
+                
+                // Metadata for filtering
+                col.dataset.category = category.name;
+                col.dataset.fav = userFavorites.includes(item.path) ? "1" : "0";
+                
+                // HTML Structure Card
+                col.innerHTML = `
+                    <article class="api-card h-100">
+                        <div class="api-card-header d-flex justify-content-between align-items-start mb-2">
+                            <h4 class="api-card-title h6 fw-bold mb-0 text-truncate" title="${item.name}">${item.name}</h4>
+                            <div class="d-flex align-items-center gap-2">
+                                <span class="http-badge http-${(item.method||'GET').toLowerCase()} badge">${item.method||'GET'}</span>
+                                <span class="endpoint-status-pill badge bg-secondary" data-path="${item.path}">...</span>
+                            </div>
+                        </div>
+                        <p class="api-card-desc text-muted small mb-3">${item.desc || 'No description available.'}</p>
+                        <div class="api-card-footer mt-auto pt-3 border-top d-flex justify-content-between align-items-center">
+                            <code class="api-path small text-truncate me-2 bg-light px-2 py-1 rounded" style="max-width: 60%;">${item.path}</code>
+                            <div class="api-card-actions">
+                                <button type="button" class="btn btn-sm btn-primary api-open-btn"><i class="fas fa-play me-1"></i> Try</button>
+                                <button type="button" class="btn btn-sm btn-outline-warning fav-toggle-btn ${userFavorites.includes(item.path) ? 'favorited' : ''}">
+                                    <i class="fas fa-star"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </article>
+                `;
 
-        // Search box clear button
-        const clearBtn = document.getElementById("clearSearch");
-        if (clearBtn) {
-            clearBtn.addEventListener("click", () => {
-                DOM.searchBox.value = "";
-                DOM.searchBox.dispatchEvent(new Event("input"));
+                // Bind Events
+                const tryBtn = col.querySelector(".api-open-btn");
+                const favBtn = col.querySelector(".fav-toggle-btn");
+
+                tryBtn.addEventListener("click", () => openApiModal(item));
+                favBtn.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    toggleFavorite(item.path, favBtn);
+                });
+
+                row.appendChild(col);
             });
-        }
+        });
 
-        // Initialize settings if already loaded
-        if (settings) {
-            renderCategories();
-            renderAPIItems();
-            renderFavorites();
-            renderHistory();
-        }
-
-        // Endpoint status checker (GET only)
-        checkAllEndpointsStatus();
-
-        // Hide loader if exists
-        const loader = document.getElementById("loadingScreen");
-        if (loader) loader.style.display = "none";
+        DOM.apiContent.appendChild(row);
+        
+        // Trigger Status Check (Async)
+        checkAllEndpointStatuses();
     }
 
-    // CHECK ENDPOINT STATUS
-    function checkAllEndpointsStatus() {
-        document.querySelectorAll(".api-item").forEach(item => {
-            const badge = item.querySelector(".endpoint-status-pill");
-            const path = item.querySelector(".btn-open").dataset.path;
+    function renderCategoryFilters(categories) {
+        if (!DOM.apiFilters) return;
+        DOM.apiFilters.innerHTML = "";
 
-            if (!badge || !path) return;
+        // 'All' Button
+        const allBtn = document.createElement("button");
+        allBtn.className = "filter-chip active";
+        allBtn.textContent = "Semua";
+        allBtn.dataset.filter = "all";
+        DOM.apiFilters.appendChild(allBtn);
 
-            fetch(path, { method: "GET" })
+        // Category Buttons
+        categories.forEach(cat => {
+            const btn = document.createElement("button");
+            btn.className = "filter-chip";
+            btn.textContent = cat.name;
+            btn.dataset.filter = cat.name;
+            DOM.apiFilters.appendChild(btn);
+        });
+
+        // 'Favorites' Button
+        const favBtn = document.createElement("button");
+        favBtn.className = "filter-chip";
+        favBtn.textContent = "Favorit Saya";
+        favBtn.dataset.filter = "favorites";
+        DOM.apiFilters.appendChild(favBtn);
+
+        // Filter Logic
+        DOM.apiFilters.addEventListener("click", (e) => {
+            if (!e.target.classList.contains("filter-chip")) return;
+            
+            // Toggle Active Class
+            DOM.apiFilters.querySelectorAll(".filter-chip").forEach(b => b.classList.remove("active"));
+            e.target.classList.add("active");
+
+            const filterValue = e.target.dataset.filter;
+            filterApiItems(filterValue);
+        });
+    }
+
+    function filterApiItems(filterValue) {
+        const items = document.querySelectorAll(".api-item");
+        const searchQuery = DOM.searchInput ? DOM.searchInput.value.toLowerCase() : "";
+
+        items.forEach(item => {
+            const itemCategory = item.dataset.category;
+            const isFav = item.dataset.fav === "1";
+            const textContent = item.textContent.toLowerCase();
+
+            // Logic: Category Match && Search Match
+            let categoryMatch = false;
+            if (filterValue === "all") categoryMatch = true;
+            else if (filterValue === "favorites") categoryMatch = isFav;
+            else categoryMatch = (itemCategory === filterValue);
+
+            const searchMatch = textContent.includes(searchQuery);
+
+            if (categoryMatch && searchMatch) {
+                item.style.display = ""; // Show
+            } else {
+                item.style.display = "none"; // Hide
+            }
+        });
+    }
+
+    // ================================================================
+    // 8. STATUS CHECKER (Background Task)
+    // ================================================================
+
+    function checkAllEndpointStatuses() {
+        const statusPills = document.querySelectorAll(".endpoint-status-pill");
+        
+        statusPills.forEach(pill => {
+            const path = pill.dataset.path;
+            const methodBadge = pill.closest(".api-card").querySelector(".http-badge");
+            const method = methodBadge ? methodBadge.textContent : "GET";
+
+            // Skip checking for POST/PUT/DELETE (Need body)
+            if (method !== "GET") {
+                pill.className = "endpoint-status-pill badge bg-success";
+                pill.textContent = "Ready";
+                return;
+            }
+
+            // Simple GET Check
+            // Using HEAD or GET to check if endpoint is alive
+            fetch(path, { method: "HEAD" }) // HEAD is lighter than GET
                 .then(res => {
-                    if (res.ok) {
-                        badge.classList.remove("bg-danger");
-                        badge.classList.add("bg-success");
-                        badge.textContent = "Online";
+                    if (res.ok || res.status === 405 || res.status === 400) { 
+                        // 405/400 means server is there, just needs params
+                        pill.className = "endpoint-status-pill badge bg-success";
+                        pill.textContent = "Online";
                     } else {
-                        badge.classList.remove("bg-success");
-                        badge.classList.add("bg-danger");
-                        badge.textContent = "Error";
+                        pill.className = "endpoint-status-pill badge bg-danger";
+                        pill.textContent = "Error";
                     }
                 })
                 .catch(() => {
-                    badge.classList.remove("bg-success");
-                    badge.classList.add("bg-danger");
-                    badge.textContent = "Error";
+                    pill.className = "endpoint-status-pill badge bg-danger";
+                    pill.textContent = "Offline";
                 });
         });
     }
 
-    // SMART URL GENERATOR
-    function formatURL(path) {
-        if (!path.startsWith("/") && !path.startsWith("http")) {
-            return "/" + path;
+    // ================================================================
+    // 9. MODAL & REQUEST EXECUTION (THE CORE)
+    // ================================================================
+
+    function openApiModal(item) {
+        currentApiItem = item;
+        const method = (item.method || "GET").toUpperCase();
+
+        // 1. Reset Modal UI
+        DOM.modalTitle.textContent = item.name;
+        DOM.modalSubtitle.textContent = item.desc;
+        DOM.endpointText.textContent = item.path;
+        
+        DOM.modalStatusLine.textContent = "Waiting to send...";
+        DOM.modalStatusLine.className = "text-muted";
+        
+        DOM.apiResponseContent.innerHTML = ""; // Clear previous results
+        DOM.modalLoading.classList.add("d-none"); // Hide loader
+
+        // 2. Add to History
+        addToHistory(item);
+
+        // 3. Show Modal
+        if (modalInstance) modalInstance.show();
+
+        // 4. SMART LOGIC: Check Method
+        if (method === "POST" || method === "PUT") {
+            // SHOW UPLOAD FORM
+            renderUploadForm();
+        } else {
+            // AUTO EXECUTE GET REQUEST
+            executeApiRequest();
         }
-        return path;
     }
 
-    // LOGGING HELPER (console + UI)
-    function appendLog(message, type = "info") {
-        const line = document.createElement("div");
-        line.className = `log-line log-${type}`;
-        line.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
-        DOM.logs.appendChild(line);
-        DOM.logs.scrollTop = DOM.logs.scrollHeight;
-        console.log(message);
-    }
+    function renderUploadForm() {
+        DOM.apiResponseContent.innerHTML = `
+            <div class="upload-zone text-center p-5 border rounded bg-light" style="border: 2px dashed #ccc;">
+                <i class="fas fa-cloud-upload-alt fa-3x text-primary mb-3"></i>
+                <h5>File Upload Required</h5>
+                <p class="text-muted">This endpoint requires a file (Multipart/Form-Data).</p>
+                
+                <div class="mb-3">
+                    <input class="form-control" type="file" id="modalFileInput">
+                </div>
+                
+                <button id="triggerUploadBtn" class="btn btn-primary w-100">
+                    <i class="fas fa-paper-plane me-2"></i> Send Request
+                </button>
+            </div>
+            <div id="uploadResultContainer" class="mt-3"></div>
+        `;
 
-    // HISTORY CLEAR BUTTON
-    const clearHistoryBtn = document.getElementById("clearHistory");
-    if (clearHistoryBtn) {
-        clearHistoryBtn.addEventListener("click", () => {
-            historyItems = [];
-            localStorage.setItem("adaAPI_history", "[]");
-            renderHistory();
-            appendLog("History cleared.", "warn");
-        });
-    }
-
-    // FAVORITE CLEAR BUTTON
-    const clearFavBtn = document.getElementById("clearFav");
-    if (clearFavBtn) {
-        clearFavBtn.addEventListener("click", () => {
-            favorites = [];
-            localStorage.setItem("adaAPI_favorites", "[]");
-            renderFavorites();
-            appendLog("Favorites cleared.", "warn");
-        });
-    }
-    // ====== PART 6 (baris 501–600) ======
-
-    // ADVANCED SEARCH (optional hidden feature)
-    function advancedSearch(query) {
-        const items = document.querySelectorAll(".api-item");
-        query = query.toLowerCase();
-
-        items.forEach(item => {
-            const text = item.textContent.toLowerCase();
-            if (text.includes(query)) {
-                item.classList.remove("d-none");
-            } else {
-                item.classList.add("d-none");
+        // Bind Event
+        document.getElementById("triggerUploadBtn").addEventListener("click", () => {
+            const fileInput = document.getElementById("modalFileInput");
+            if (fileInput.files.length === 0) {
+                showToast("Please select a file first!", "warning");
+                return;
             }
+            // Execute with file
+            executeApiRequest(fileInput.files[0]);
         });
     }
 
-    // EVENT: REALTIME SEARCH (improved)
-    DOM.searchBox.addEventListener("keyup", () => {
-        const query = DOM.searchBox.value.trim();
-        advancedSearch(query);
-    });
+    async function executeApiRequest(fileData = null) {
+        if (!currentApiItem) return;
 
-    // AUTO-DETECT URL INPUT
-    const apiRequestInput = document.getElementById("apiRequestInput");
-    const apiRequestBtn = document.getElementById("sendApiRequest");
+        const method = (currentApiItem.method || "GET").toUpperCase();
+        const url = currentApiItem.path;
+        
+        // Where to show result?
+        const resultContainer = document.getElementById("uploadResultContainer") || DOM.apiResponseContent;
+        
+        // UI Updates
+        DOM.modalLoading.classList.remove("d-none");
+        DOM.modalStatusLine.textContent = "Sending Request...";
+        
+        appendLog(`[REQ] ${method} ${url}`);
 
-    if (apiRequestBtn) {
-        apiRequestBtn.addEventListener("click", () => {
-            const url = apiRequestInput.value.trim();
-            if (!url) return;
-
-            // treat as GET request
-            const api = {
-                name: "Custom Request",
-                desc: "Manual URL Request",
-                path: url,
-                method: "GET"
+        try {
+            // Prepare Options
+            let fetchOptions = {
+                method: method,
+                headers: {}
             };
 
-            openAPIModal(api);
-        });
-    }
-
-    // SCROLL EFFECT (fade navbar)
-    const navbar = document.querySelector(".top-navbar");
-    if (navbar) {
-        window.addEventListener("scroll", () => {
-            if (window.scrollY > 40) {
-                navbar.classList.add("scrolled");
-            } else {
-                navbar.classList.remove("scrolled");
+            // Handle Body (For Uploads)
+            if ((method === "POST" || method === "PUT") && fileData) {
+                const formData = new FormData();
+                formData.append("file", fileData); // Standard key 'file'
+                fetchOptions.body = formData;
+                // Note: Do NOT set Content-Type header manually for FormData, browser does it with boundary.
             }
-        });
-    }
 
-    // GLOBAL ERROR CATCHER
-    window.addEventListener("error", function (e) {
-        appendLog("Error: " + e.message, "error");
-    });
+            const startTime = performance.now();
+            const response = await fetch(url, fetchOptions);
+            const endTime = performance.now();
+            const duration = (endTime - startTime).toFixed(0);
 
-    // HISTORY CLICK HANDLING
-    DOM.historyList.addEventListener("click", (e) => {
-        const item = e.target.closest(".history-item");
-        if (!item) return;
+            // Update Status Line
+            const statusClass = response.ok ? "text-success" : "text-danger";
+            DOM.modalStatusLine.innerHTML = `<span class="${statusClass} fw-bold">Status: ${response.status} ${response.statusText}</span> <span class="text-muted ms-2">(${duration}ms)</span>`;
 
-        const path = item.querySelector(".text-muted")?.textContent;
-        const name = item.querySelector(".fw-bold")?.textContent;
+            // Check Content Type to render correctly
+            const contentType = response.headers.get("content-type");
+            let renderHtml = "";
 
-        if (!path) return;
+            // Handle Redirects (Manual catch if browser exposes it)
+            if (response.redirected) {
+                renderHtml += `
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle me-2"></i> 
+                        <strong>Redirect Detected:</strong><br>
+                        Page redirected to: <a href="${response.url}" target="_blank">${response.url}</a>
+                    </div>
+                `;
+            }
 
-        openAPIModal({
-            name,
-            path,
-            method: "GET",
-            desc: "Opened from history"
-        });
-    });
+            // === RENDER LOGIC ===
+            
+            // 1. IMAGE
+            if (contentType && contentType.includes("image")) {
+                const blob = await response.blob();
+                const imgUrl = URL.createObjectURL(blob);
+                renderHtml += `
+                    <div class="text-center bg-dark p-3 rounded">
+                        <img src="${imgUrl}" class="img-fluid" style="max-height: 400px;" alt="Response Image">
+                    </div>
+                    <div class="text-center mt-2 text-muted small">Image Blob Rendered</div>
+                `;
+            } 
+            // 2. AUDIO
+            else if (contentType && contentType.includes("audio")) {
+                const blob = await response.blob();
+                const audioUrl = URL.createObjectURL(blob);
+                renderHtml += `
+                    <div class="text-center p-4 bg-light rounded">
+                        <i class="fas fa-music fa-3x mb-3 text-secondary"></i><br>
+                        <audio controls class="w-100">
+                            <source src="${audioUrl}" type="${contentType}">
+                            Your browser does not support audio element.
+                        </audio>
+                    </div>
+                `;
+            }
+            // 3. VIDEO
+            else if (contentType && contentType.includes("video")) {
+                const blob = await response.blob();
+                const videoUrl = URL.createObjectURL(blob);
+                renderHtml += `
+                    <div class="ratio ratio-16x9">
+                        <video controls>
+                            <source src="${videoUrl}" type="${contentType}">
+                        </video>
+                    </div>
+                `;
+            }
+            // 4. JSON / TEXT
+            else {
+                const textData = await response.text();
+                
+                // Try Parse JSON
+                try {
+                    const jsonObj = JSON.parse(textData);
+                    
+                    // Special Handling for 'Tourl' / Upload Response (Detect URL)
+                    if (jsonObj.result && jsonObj.result.url) {
+                        renderHtml += `
+                            <div class="card border-success mb-3">
+                                <div class="card-header bg-success text-white">Upload Success!</div>
+                                <div class="card-body">
+                                    <p>URL: <a href="${jsonObj.result.url}" target="_blank" class="fw-bold text-decoration-underline">${jsonObj.result.url}</a></p>
+                                    ${jsonObj.result.mime && jsonObj.result.mime.includes('image') ? `<img src="${jsonObj.result.url}" style="height: 100px;" class="rounded border">` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }
 
-    // FAVORITE CLICK HANDLING (from list)
-    if (DOM.favoritesSection) {
-        DOM.favoritesSection.addEventListener("click", (e) => {
-            const rm = e.target.closest(".btn-remove-fav");
-            if (!rm) return;
+                    // Standard Beautified JSON
+                    const prettyJson = JSON.stringify(jsonObj, null, 2);
+                    renderHtml += `<pre class="json-response p-3 rounded" style="background: #1e1e1e; color: #d4d4d4; overflow: auto; max-height: 400px;"><code>${prettyJson}</code></pre>`;
+                
+                } catch (e) {
+                    // Plain Text
+                    renderHtml += `<pre class="p-3 bg-light border rounded">${textData}</pre>`;
+                }
+            }
 
-            const path = rm.dataset.path;
-            favorites = favorites.filter(f => f !== path);
-            localStorage.setItem("adaAPI_favorites", JSON.stringify(favorites));
-            renderFavorites();
-        });
-    }
+            resultContainer.innerHTML = renderHtml;
+            appendLog(`[RES] ${response.status} OK`);
 
-    // PREVENT DOUBLE TAP ZOOM ON MOBILE
-    let lastTap = 0;
-    document.addEventListener("touchend", function (e) {
-        const now = new Date().getTime();
-        if (now - lastTap < 300) {
-            e.preventDefault();
+        } catch (error) {
+            console.error(error);
+            const errorHtml = `
+                <div class="alert alert-danger">
+                    <strong>Request Failed:</strong> ${error.message}
+                </div>
+            `;
+            if (resultContainer) resultContainer.innerHTML = errorHtml;
+            DOM.modalStatusLine.textContent = "Error";
+            appendLog(`[ERR] ${error.message}`, "error");
+        } finally {
+            DOM.modalLoading.classList.add("d-none");
         }
-        lastTap = now;
-    }, false);
-    // ====== PART 7 (baris 601–700) ======
-
-    // ANIMATED SCROLL TO TOP
-    const scrollTopBtn = document.getElementById("scrollTopBtn");
-
-    if (scrollTopBtn) {
-        window.addEventListener("scroll", () => {
-            if (window.scrollY > 300) {
-                scrollTopBtn.classList.add("show");
-            } else {
-                scrollTopBtn.classList.remove("show");
-            }
-        });
-
-        scrollTopBtn.addEventListener("click", () => {
-            window.scrollTo({
-                top: 0,
-                behavior: "smooth"
-            });
-        });
     }
 
-    // LAZY LOADING OBSERVER (image optimization)
-    const lazyImages = document.querySelectorAll("img[data-src]");
-    if ("IntersectionObserver" in window) {
-        let imgObserver = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    const img = entry.target;
-                    img.src = img.dataset.src;
-                    img.removeAttribute("data-src");
+    // ================================================================
+    // 10. MODAL EVENTS (COPY, CURL, ETC)
+    // ================================================================
+
+    function initModalActions() {
+        // A. COPY ENDPOINT (Auto Domain Prefix)
+        if (DOM.copyEndpointBtn) {
+            DOM.copyEndpointBtn.addEventListener("click", async () => {
+                const path = DOM.endpointText.textContent.trim();
+                // Get Current Origin (e.g., https://my-app.vercel.app)
+                const origin = window.location.origin;
+                const fullUrl = origin + path;
+
+                try {
+                    await navigator.clipboard.writeText(fullUrl);
+                    showToast("Link Endpoint Tersalin!");
+                    
+                    // Button Feedback
+                    const originalIcon = DOM.copyEndpointBtn.innerHTML;
+                    DOM.copyEndpointBtn.innerHTML = `<i class="fas fa-check"></i> Copied`;
+                    setTimeout(() => DOM.copyEndpointBtn.innerHTML = originalIcon, 2000);
+                } catch (err) {
+                    showToast("Gagal menyalin link", "danger");
                 }
             });
-        });
-
-        lazyImages.forEach(img => imgObserver.observe(img));
-    }
-
-    // AUTO-FOCUS SEARCH BOX WHEN OPENING SIDEBAR (mobile)
-    if (DOM.sidebarToggle && DOM.searchBox) {
-        DOM.sidebarToggle.addEventListener("click", () => {
-            setTimeout(() => {
-                DOM.searchBox.focus();
-            }, 300);
-        });
-    }
-
-    // ENDPOINT PREVIEW TOOLTIP
-    document.addEventListener("mouseover", (e) => {
-        const btn = e.target.closest(".btn-open");
-        if (!btn) return;
-
-        const path = btn.dataset.path;
-        if (!path) return;
-
-        btn.title = "Endpoint: " + path;
-    });
-
-    // WATCH FOR SETTINGS JSON UPDATES (Auto-refresh categories)
-    let settings_last_hash = "";
-    async function watchSettingsLive() {
-        try {
-            const res = await fetch("/src/settings.json", { cache: "no-store" });
-            const txt = await res.text();
-            const hash = btoa(txt); // crude hashing
-
-            if (!settings_last_hash) settings_last_hash = hash;
-
-            if (settings_last_hash !== hash) {
-                settings_last_hash = hash;
-                settings = JSON.parse(txt);
-                renderCategories();
-                renderAPIItems();
-                appendLog("settings.json updated — UI refreshed", "warn");
-            }
-        } catch (e) {
-            appendLog("Failed to check settings.json", "error");
         }
-    }
 
-    // Periodic settings watcher
-    setInterval(watchSettingsLive, 7000);
+        // B. COPY CURL
+        if (DOM.copyCurlBtn) {
+            DOM.copyCurlBtn.addEventListener("click", async () => {
+                if (!currentApiItem) return;
+                
+                const method = (currentApiItem.method || "GET").toUpperCase();
+                const origin = window.location.origin;
+                const fullUrl = origin + currentApiItem.path;
+                
+                const curlCommand = `curl -X ${method} "${fullUrl}"`;
 
-    // KEEP-ALIVE PING (prevents vercel cold start)
-    setInterval(() => {
-        fetch("/api/ping").catch(() => {});
-    }, 15000);
-
-    // SERVICE WORKER REGISTRATION (if exists)
-    if ("serviceWorker" in navigator) {
-        navigator.serviceWorker.register("/sw.js").catch(() => {});
-    }
-    // ====== PART 8 (baris 701–805) ======
-
-    // DETECT CLICK ON API CARD ITSELF
-    document.addEventListener("click", (e) => {
-        const card = e.target.closest(".api-item");
-        if (!card) return;
-
-        const btn = e.target.closest("button");
-        if (btn) return; // avoid conflict with button click
-
-        const openBtn = card.querySelector(".btn-open");
-        if (!openBtn) return;
-
-        const item = {
-            name: openBtn.dataset.name,
-            path: openBtn.dataset.path,
-            desc: openBtn.dataset.desc,
-            method: openBtn.dataset.method
-        };
-
-        openAPIModal(item);
-    });
-
-    // FULLSCREEN IMAGE VIEWER (tap to enlarge)
-    document.addEventListener("click", (e) => {
-        if (e.target.tagName === "IMG" && e.target.classList.contains("img-fluid")) {
-            const viewer = document.createElement("div");
-            viewer.className = "fullscreen-viewer";
-
-            viewer.innerHTML = `
-                <img src="${e.target.src}" class="viewer-img">
-                <span class="viewer-close">&times;</span>
-            `;
-
-            document.body.appendChild(viewer);
-
-            viewer.querySelector(".viewer-close").addEventListener("click", () => {
-                viewer.remove();
+                try {
+                    await navigator.clipboard.writeText(curlCommand);
+                    showToast("Perintah cURL Tersalin!");
+                } catch (err) {
+                    showToast("Gagal menyalin cURL", "danger");
+                }
             });
         }
-    });
-
-    // DOUBLE CHECK FOR BROKEN LINKS
-    function checkBrokenImages() {
-        document.querySelectorAll("img").forEach(img => {
-            img.onerror = () => {
-                img.src = "/img/broken.png";
-            };
-        });
     }
-    checkBrokenImages();
 
-    // FINAL INIT
+    // ================================================================
+    // 11. VISUAL EFFECTS (PARALLAX & CURSOR)
+    // ================================================================
+
+    function initVisualEffects() {
+        // Banner Parallax
+        if (DOM.bannerParallax) {
+            DOM.bannerParallax.addEventListener("mousemove", (e) => {
+                const rect = DOM.bannerParallax.getBoundingClientRect();
+                const x = e.clientX - rect.left;
+                const y = e.clientY - rect.top;
+                
+                // Calculate percentage
+                const xPercent = (x / rect.width - 0.5) * 2; // -1 to 1
+                const yPercent = (y / rect.height - 0.5) * 2;
+
+                const img = DOM.bannerParallax.querySelector("img");
+                if (img) {
+                    img.style.transform = `scale(1.1) translate(${xPercent * 10}px, ${yPercent * 10}px)`;
+                }
+            });
+
+            DOM.bannerParallax.addEventListener("mouseleave", () => {
+                const img = DOM.bannerParallax.querySelector("img");
+                if (img) img.style.transform = `scale(1) translate(0,0)`;
+            });
+        }
+
+        // Cursor Glow
+        if (DOM.cursorGlow) {
+            document.addEventListener("mousemove", (e) => {
+                DOM.cursorGlow.style.left = e.clientX + "px";
+                DOM.cursorGlow.style.top = e.clientY + "px";
+            });
+        }
+
+        // Scroll Reveal
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.classList.add("reveal-visible");
+                }
+            });
+        }, { threshold: 0.1 });
+
+        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    }
+
+    // ================================================================
+    // 12. WHATSAPP REQUEST BOX
+    // ================================================================
+    
+    function initRequestBox() {
+        if (DOM.sendApiRequest) {
+            DOM.sendApiRequest.addEventListener("click", () => {
+                const msg = DOM.apiRequestInput.value.trim();
+                if (!msg) {
+                    showToast("Ketik permintaan dulu!", "warning");
+                    return;
+                }
+                const phone = "6287751121269";
+                const text = encodeURIComponent(`Halo min, request API dong:\n\n${msg}`);
+                window.open(`https://wa.me/${phone}?text=${text}`, "_blank");
+                DOM.apiRequestInput.value = "";
+            });
+        }
+    }
+
+    // ================================================================
+    // 13. APP INITIALIZATION (BOOT SEQUENCE)
+    // ================================================================
+
+    async function initApp() {
+        appendLog("Initializing Application...");
+        
+        // 1. Setup UI
+        initSidebarLogic();
+        initThemeEngine();
+        initVisualEffects();
+        initModalActions();
+        initRequestBox();
+        renderHistoryList();
+
+        // 2. Load Settings
+        try {
+            const response = await fetch("/src/settings.json");
+            if (!response.ok) throw new Error("Settings not found");
+            appSettings = await response.json();
+            
+            // Set Version
+            if (DOM.versionBadge && appSettings.version) {
+                DOM.versionBadge.textContent = appSettings.version;
+            }
+
+            appendLog("Settings loaded successfully.");
+        } catch (error) {
+            console.error("Failed to load settings", error);
+            appSettings = { categories: fallbackCategories };
+            showToast("Failed loading config, using fallback.", "danger");
+            appendLog("Failed loading settings.json", "error");
+        }
+
+        // 3. Render Content
+        renderApiContent();
+        
+        // 4. Setup Search Listener
+        if (DOM.searchInput) {
+            DOM.searchInput.addEventListener("input", () => {
+                // Determine active filter
+                const activeFilterBtn = DOM.apiFilters.querySelector(".active");
+                const filterVal = activeFilterBtn ? activeFilterBtn.dataset.filter : "all";
+                filterApiItems(filterVal);
+            });
+        }
+        
+        if (DOM.clearSearch) {
+            DOM.clearSearch.addEventListener("click", () => {
+                DOM.searchInput.value = "";
+                const activeFilterBtn = DOM.apiFilters.querySelector(".active");
+                const filterVal = activeFilterBtn ? activeFilterBtn.dataset.filter : "all";
+                filterApiItems(filterVal);
+            });
+        }
+
+        appendLog("System Ready.");
+    }
+
+    // Start!
     initApp();
-
-}); // END DOMContentLoaded
-
-// ====== END OF SCRIPT.JS (805 BARIS) ======
+});

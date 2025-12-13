@@ -1,28 +1,74 @@
 {
-  "name": "Ada API",
-  "version": "1.0.0",
-  "description": "API console - settings",
+  "name": "Ada API UI",
+  "version": "v2.0.0",
+  "description": "Private API Console with Smart Tools.",
+  "bannerImage": "/src/banner.gif",
+  "header": {
+    "status": "Online!"
+  },
+  "apiSettings": {
+    "creator": "Ada",
+    "apikey": ["ada-api"]
+  },
   "categories": [
     {
-      "name": "Downloader",
+      "name": "AI Tools",
       "items": [
         {
-          "name": "YouTube -> MP3 (Nekolabs Proxy)",
-          "desc": "Convert YouTube (watch/shorts/embed/short url) to MP3 via Nekolabs (proxied)",
-          "path": "/api/download/ytmp3?url=https://m.youtube.com/shorts/PcY3LMfDxmc",
+          "name": "LuminAI Chat",
+          "desc": "Percakapan AI sederhana.",
           "method": "GET",
-          "example": "https://m.youtube.com/shorts/PcY3LMfDxmc"
+          "path": "/ai/luminai?text=siapa%20presiden%20indonesia",
+          "params": {
+            "text": "Pertanyaan untuk AI"
+          }
+        },
+        {
+          "name": "Image Gen (Prompt)",
+          "desc": "Membuat gambar dari teks.",
+          "method": "GET",
+          "path": "/ai/image?prompt=kucing%20cyberpunk&style=anime",
+          "params": {
+            "prompt": "Deskripsi Gambar",
+            "style": "Gaya (anime/realistis)"
+          }
         }
       ]
     },
     {
-      "name": "System",
+      "name": "Downloader",
       "items": [
         {
-          "name": "System Status",
-          "desc": "Check if server is up",
-          "path": "/status",
-          "method": "GET"
+          "name": "YouTube MP3",
+          "desc": "Download audio dari YouTube.",
+          "method": "GET",
+          "path": "/api/download/ytmp3?url=https://youtu.be/dummy-link",
+          "params": {
+            "url": "Link YouTube"
+          }
+        },
+        {
+          "name": "Tiktok Downloader",
+          "desc": "Tanpa watermark.",
+          "method": "GET",
+          "path": "/api/download/tiktok?url=https://tiktok.com/dummy",
+          "params": {
+            "url": "Link Tiktok"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Search",
+      "items": [
+        {
+          "name": "Cari Video",
+          "desc": "Search engine YouTube.",
+          "method": "GET",
+          "path": "/search/youtube?q=lagu%20galau%20terbaru",
+          "params": {
+            "q": "Kata kunci pencarian"
+          }
         }
       ]
     }

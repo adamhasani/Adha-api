@@ -24,7 +24,7 @@
           }
         },
         {
-          "name": "Image Gen (Prompt)",
+          "name": "Image Gen",
           "desc": "Membuat gambar dari teks.",
           "method": "GET",
           "path": "/ai/image?prompt=kucing%20cyberpunk&style=anime",
@@ -45,15 +45,6 @@
           "path": "/api/download/ytmp3?url=https://youtu.be/dummy-link",
           "params": {
             "url": "Link YouTube"
-          }
-        },
-        {
-          "name": "Tiktok Downloader",
-          "desc": "Tanpa watermark.",
-          "method": "GET",
-          "path": "/api/download/tiktok?url=https://tiktok.com/dummy",
-          "params": {
-            "url": "Link Tiktok"
           }
         }
       ]

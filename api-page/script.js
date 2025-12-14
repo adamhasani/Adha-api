@@ -820,13 +820,39 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initModalEvents() {
-    if (DOM.copyEndpointBtn && DOM.endpointText) {
-      DOM.copyEndpointBtn.addEventListener("click", async () => {
+
+  // ================================
+  // NORMALIZE ENDPOINT FOR COPY (PLACEHOLDER MODE)
+  // ================================
+  function normalizeEndpointForCopy(path) {
+    try {
+      const [base, query] = path.split("?");
+      if (!query) return path;
+
+      const params = new URLSearchParams(query);
+      if (params.has("url")) {
+        params.set("url", "{LINK_YT}");
+      }
+
+      return base + "?" + params.toString();
+    } catch {
+      return path;
+    }
+  }
+
+    if (DOM.copyEndpointBtn) {
+      DOM.copyEndpointBtn.addEventListener("click", async (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!currentApiItem || !settings) return;
+
+        const baseUrl = settings.copyBaseUrl || window.location.origin || "";
+        const safePath = normalizeEndpointForCopy(currentApiItem.path || "");
+        const full = baseUrl + safePath;
+
         try {
-          await navigator.clipboard.writeText(DOM.endpointText.textContent);
-        } catch {
-          // ignore
-        }
+          await navigator.clipboard.writeText(full);
+        } catch {}
       });
     }
 
@@ -956,57 +982,6 @@ document.addEventListener("DOMContentLoaded", () => {
     await loadSettings();
     appendLog("Ada API Console siap.");
   }
-
-
-  // ================================
-  // NORMALIZE ENDPOINT FOR COPY (PLACEHOLDER MODE)
-  // ================================
-  function normalizeEndpointForCopy(path) {
-    try {
-      const [base, query] = path.split("?");
-      if (!query) return path;
-
-      const params = new URLSearchParams(query);
-      if (params.has("url")) {
-        params.set("url", "{LINK_YT}");
-      }
-
-      return base + "?" + params.toString();
-    } catch {
-      return path;
-    }
-  }
-
-  // ================================
-  // COPY ENDPOINT (USE copyBaseUrl FROM SETTINGS)
-  // ================================
-  function initCopyEndpointFinal() {
-    const baseUrl =
-      (settings && settings.copyBaseUrl) ||
-      (window.location.origin && window.location.origin !== "null"
-        ? window.location.origin
-        : "");
-
-    document.querySelectorAll("[data-endpoint]").forEach((button) => {
-      button.addEventListener("click", (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-
-        const rawPath = button.getAttribute("data-endpoint") || "";
-        const safePath = normalizeEndpointForCopy(rawPath);
-
-        const full = baseUrl + safePath;
-
-        navigator.clipboard.writeText(full).then(() => {
-          const t = button.innerText;
-          button.innerText = "Tersalin âœ”";
-          setTimeout(() => (button.innerText = t), 1200);
-        });
-      });
-    });
-  }
-
-  initCopyEndpointFinal();
 
   init();
 });

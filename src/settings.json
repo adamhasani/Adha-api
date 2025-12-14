@@ -20,7 +20,7 @@
           "method": "GET",
           "path": "/ai/luminai?text=siapa%20presiden%20indonesia",
           "params": {
-            "text": "Pertanyaan untuk AI"
+            "text": "Pertanyaan"
           }
         },
         {

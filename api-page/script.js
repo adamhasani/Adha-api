@@ -1,4 +1,4 @@
-// Ada API Console – script utama (nyambung ke index.html + src/settings.json)
+// Ada API Console â€“ script utama (nyambung ke index.html + src/settings.json)
 // Versi FULL: Original Structure + Smart Upload & Image Support
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.textContent = "Error";
     } else if (s === "checking") {
       el.classList.add("status-unknown");
-      el.textContent = "Checking…";
+      el.textContent = "Checkingâ€¦";
     } else {
       el.classList.add("status-unknown");
       el.textContent = "Unknown";
@@ -739,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!url) return;
 
     if (DOM.modalStatusLine) {
-      DOM.modalStatusLine.textContent = "Mengirim permintaan…";
+      DOM.modalStatusLine.textContent = "Mengirim permintaanâ€¦";
     }
     if (DOM.modalLoading) DOM.modalLoading.classList.remove("d-none");
     if (!fileData) {
@@ -846,7 +846,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // REQUEST BOX → WHATSAPP
+  // REQUEST BOX â†’ WHATSAPP
   // ================================
   function initRequestBox() {
     if (!DOM.apiRequestInput || !DOM.sendApiRequest) return;
@@ -911,7 +911,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // SETTINGS.JSON → HERO & API
+  // SETTINGS.JSON â†’ HERO & API
   // ================================
   function applySettingsToHero() {
     if (!settings) return;
@@ -952,36 +952,52 @@ document.addEventListener("DOMContentLoaded", () => {
     initScrollReveal();
     renderHistory();
 
-    appendLog("Menyiapkan konsol Ada API…");
+    appendLog("Menyiapkan konsol Ada APIâ€¦");
     await loadSettings();
     appendLog("Ada API Console siap.");
   }
 
 
   // ================================
-  // COPY ENDPOINT TEMPLATE (PLACEHOLDER MODE)
+  // COPY ENDPOINT (REAL URL + FALLBACK)
   // ================================
-  function initCopyEndpointTemplate() {
-    const baseUrl = window.location.origin;
+  function initCopyEndpointReal() {
+    const fallbackDomain = "https://ada-api-vace.vercel.app";
+    const baseUrl =
+      window.location.origin && window.location.origin !== "null"
+        ? window.location.origin
+        : fallbackDomain;
 
     document.querySelectorAll("[data-endpoint]").forEach((button) => {
       button.addEventListener("click", () => {
-        const endpoint = button.getAttribute("data-endpoint");
-        const params = button.getAttribute("data-params"); // contoh: url={LINK-YT}&format=mp3
+        const endpoint = button.getAttribute("data-endpoint") || "";
+        const params = button.getAttribute("data-params") || "";
 
         let full = baseUrl + endpoint;
         if (params) full += "?" + params;
 
         navigator.clipboard.writeText(full).then(() => {
-          const origText = button.innerText;
-          button.innerText = "Tersalin ✔";
-          setTimeout(() => (button.innerText = origText), 1200);
+          const t = button.innerText;
+          button.innerText = "Tersalin âœ”";
+          setTimeout(() => (button.innerText = t), 1200);
         });
       });
     });
   }
 
-  initCopyEndpointTemplate();
+  // ================================
+  // FIX BODY SCROLL (MODAL CLOSE)
+  // ================================
+  function fixBodyScroll() {
+    document.addEventListener("hidden.bs.modal", () => {
+      document.body.classList.remove("modal-open");
+      document.body.style.overflow = "";
+      document.body.style.paddingRight = "";
+    });
+  }
+
+  initCopyEndpointReal();
+  fixBodyScroll();
 
   init();
 });

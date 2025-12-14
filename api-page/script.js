@@ -1,4 +1,4 @@
-// Ada API Console – script utama (nyambung ke index.html + src/settings.json)
+// Ada API Console â€“ script utama (nyambung ke index.html + src/settings.json)
 // Versi FULL: Original Structure + Smart Upload & Image Support
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.textContent = "Error";
     } else if (s === "checking") {
       el.classList.add("status-unknown");
-      el.textContent = "Checking…";
+      el.textContent = "Checkingâ€¦";
     } else {
       el.classList.add("status-unknown");
       el.textContent = "Unknown";
@@ -739,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!url) return;
 
     if (DOM.modalStatusLine) {
-      DOM.modalStatusLine.textContent = "Mengirim permintaan…";
+      DOM.modalStatusLine.textContent = "Mengirim permintaanâ€¦";
     }
     if (DOM.modalLoading) DOM.modalLoading.classList.remove("d-none");
     if (!fileData) {
@@ -846,7 +846,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // REQUEST BOX → WHATSAPP
+  // REQUEST BOX â†’ WHATSAPP
   // ================================
   function initRequestBox() {
     if (!DOM.apiRequestInput || !DOM.sendApiRequest) return;
@@ -911,7 +911,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // SETTINGS.JSON → HERO & API
+  // SETTINGS.JSON â†’ HERO & API
   // ================================
   function applySettingsToHero() {
     if (!settings) return;
@@ -952,7 +952,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initScrollReveal();
     renderHistory();
 
-    appendLog("Menyiapkan konsol Ada API…");
+    appendLog("Menyiapkan konsol Ada APIâ€¦");
     await loadSettings();
     appendLog("Ada API Console siap.");
   }
@@ -978,14 +978,14 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // COPY ENDPOINT (FULL DOMAIN + PLACEHOLDER)
+  // COPY ENDPOINT (USE copyBaseUrl FROM SETTINGS)
   // ================================
   function initCopyEndpointFinal() {
-    const fallbackDomain = "https://ada-api-vace.vercel.app";
     const baseUrl =
-      window.location.origin && window.location.origin !== "null"
+      (settings && settings.copyBaseUrl) ||
+      (window.location.origin && window.location.origin !== "null"
         ? window.location.origin
-        : fallbackDomain;
+        : "");
 
     document.querySelectorAll("[data-endpoint]").forEach((button) => {
       button.addEventListener("click", (e) => {
@@ -999,7 +999,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         navigator.clipboard.writeText(full).then(() => {
           const t = button.innerText;
-          button.innerText = "Tersalin ✔";
+          button.innerText = "Tersalin âœ”";
           setTimeout(() => (button.innerText = t), 1200);
         });
       });

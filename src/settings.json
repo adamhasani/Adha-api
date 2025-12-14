@@ -1,7 +1,7 @@
 {
   "name": "Ada API UI",
-  "version": "v2.0.0",
-  "description": "Private API Console with Smart Tools.",
+  "version": "v1.0.0",
+  "description": "Simple and easy to use API console for Ada API.",
   "bannerImage": "/src/banner.gif",
   "header": {
     "status": "Online!"
@@ -12,25 +12,27 @@
   },
   "categories": [
     {
-      "name": "AI Tools",
+      "name": "AI (Artificial Intelligence)",
       "items": [
         {
-          "name": "LuminAI Chat",
-          "desc": "Percakapan AI sederhana.",
+          "name": "LuminAI",
+          "desc": "Talk with LuminAI. Contoh: text=halo dari web",
+          "path": "/ai/luminai?text=halo%20dari%20web",
+          "status": "ready",
           "method": "GET",
-          "path": "/ai/luminai?text=siapa%20presiden%20indonesia",
           "params": {
-            "text": "Pertanyaan"
+            "text": "Text for luminai to respond to"
           }
         },
         {
-          "name": "Image Gen",
-          "desc": "Membuat gambar dari teks.",
+          "name": "HydroMind",
+          "desc": "Chat AI via HydroMind. Contoh: text=halo; model=isi sesuai daftar di mind.hydrooo.web.id",
+          "path": "/ai/hydromind?text=halo%20dari%20web&model=gpt-4o",
+          "status": "ready",
           "method": "GET",
-          "path": "/ai/image?prompt=kucing%20cyberpunk&style=anime",
           "params": {
-            "prompt": "Deskripsi Gambar",
-            "style": "Gaya (anime/realistis)"
+            "text": "Teks atau perintah untuk chat AI",
+            "model": "See the list of supported AI models here: https://mind.hydrooo.web.id"
           }
         }
       ]
@@ -40,25 +42,54 @@
       "items": [
         {
           "name": "YouTube MP3",
-          "desc": "Download audio dari YouTube.",
+          "desc": "Download Audio YouTube via Link.",
+          "path": "/api/download/ytmp3?url=https://youtu.be/na8A4-fapww?si=sFu7VY0yzsUyLeTg",
+          "status": "ready",
           "method": "GET",
-          "path": "/api/download/ytmp3?url=https://youtu.be/dummy-link",
           "params": {
-            "url": "Link YouTube"
+            "url": "Link YouTube (Contoh: https://youtu.be/...)"
           }
         }
       ]
     },
     {
-      "name": "Search",
+      "name": "Random",
       "items": [
         {
-          "name": "Cari Video",
-          "desc": "Search engine YouTube.",
+          "name": "Blue Archive",
+          "desc": "Blue Archive random images.",
+          "path": "/random/ba",
+          "status": "ready",
+          "method": "GET"
+        }
+      ]
+    },
+    {
+      "name": "Search Tools",
+      "items": [
+        {
+          "name": "YouTube",
+          "desc": "Video search. Contoh: q=lofi hip hop",
+          "path": "/search/youtube?q=lofi%20hip%20hop",
+          "status": "ready",
           "method": "GET",
-          "path": "/search/youtube?q=lagu%20galau%20terbaru",
           "params": {
-            "q": "Kata kunci pencarian"
+            "q": "Search query"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Tools",
+      "items": [
+        {
+          "name": "Tourl (Upload)",
+          "desc": "Upload File/Gambar menjadi Link URL (Auto Fallback Catbox/Yupra).",
+          "path": "/api/tools/tourl",
+          "status": "ready",
+          "method": "POST",
+          "params": {
+            "file": "Media (Image/Video/Doc)"
           }
         }
       ]

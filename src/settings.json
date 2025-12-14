@@ -6,12 +6,15 @@
   "header": {
     "status": "Online!"
   },
+
+  "apiBaseUrl": "https://ada-api-vace.vercel.app",
+  "copyBaseUrl": "https://ada-api-vace.vercel.app",
+
   "apiSettings": {
     "creator": "Ada",
-    "apikey": [
-      "ada-api"
-    ]
+    "apikey": ["ada-api"]
   },
+
   "categories": [
     {
       "name": "AI (Artificial Intelligence)",
@@ -19,7 +22,7 @@
         {
           "name": "LuminAI",
           "desc": "Talk with LuminAI. Contoh: text=halo dari web",
-          "path": "/ai/luminai?text=halo%20dari%20web",
+          "path": "/ai/luminai?text=halo dari web",
           "status": "ready",
           "method": "GET",
           "params": {
@@ -29,7 +32,7 @@
         {
           "name": "HydroMind",
           "desc": "Chat AI via HydroMind. Contoh: text=halo; model=isi sesuai daftar di mind.hydrooo.web.id",
-          "path": "/ai/hydromind?text=halo%20dari%20web&model=gpt-4o",
+          "path": "/ai/hydromind?text=halo dari web&model=gpt-4o",
           "status": "ready",
           "method": "GET",
           "params": {
@@ -45,7 +48,7 @@
         {
           "name": "YouTube MP3",
           "desc": "Download Audio YouTube via Link.",
-          "path": "/api/download/ytmp3?url=https://youtu.be/na8A4-fapww?si=sFu7VY0yzsUyLeTg",
+          "path": "/api/download/ytmp3?url=https%3A%2F%2Fyoutu.be%2Fna8A4-fapww%3Fsi%3DsFu7VY0yzsUyLeTg",
           "status": "ready",
           "method": "GET",
           "params": {
@@ -72,7 +75,7 @@
         {
           "name": "YouTube",
           "desc": "Video search. Contoh: q=lofi hip hop",
-          "path": "/search/youtube?q=lofi%20hip%20hop",
+          "path": "/search/youtube?q=lofi hip hop",
           "status": "ready",
           "method": "GET",
           "params": {
@@ -96,6 +99,5 @@
         }
       ]
     }
-  ],
-  "copyBaseUrl": "https://ada-api-vace.vercel.app"
-}
+  ]
+}}

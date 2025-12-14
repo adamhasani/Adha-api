@@ -822,7 +822,20 @@ document.addEventListener("DOMContentLoaded", () => {
   function initModalEvents() {
 
   // ================================
-  // NORMALIZE ENDPOINT FOR COPY (PLACEHOLDER MODE)
+  // FILTER NORMALIZE (ONLY DOWNLOAD)
+  // ================================
+  function shouldNormalizeForCopy(item) {
+    return (
+      item &&
+      item.method === "GET" &&
+      typeof item.path === "string" &&
+      item.path.includes("/download/") &&
+      item.path.includes("url=")
+    );
+  }
+
+  // ================================
+  // NORMALIZE ENDPOINT FOR COPY
   // ================================
   function normalizeEndpointForCopy(path) {
     try {
@@ -846,9 +859,19 @@ document.addEventListener("DOMContentLoaded", () => {
         e.stopPropagation();
         if (!currentApiItem || !settings) return;
 
-        const baseUrl = settings.copyBaseUrl || window.location.origin || "";
-        const safePath = normalizeEndpointForCopy(currentApiItem.path || "");
-        const full = baseUrl + safePath;
+        let path = currentApiItem.path || "";
+
+        if (shouldNormalizeForCopy(currentApiItem)) {
+          path = normalizeEndpointForCopy(path);
+        }
+
+        const baseUrl =
+          settings.copyBaseUrl ||
+          (window.location.origin && window.location.origin !== "null"
+            ? window.location.origin
+            : "");
+
+        const full = baseUrl + path;
 
         try {
           await navigator.clipboard.writeText(full);

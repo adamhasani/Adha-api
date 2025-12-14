@@ -8,7 +8,9 @@
   },
   "apiSettings": {
     "creator": "Ada",
-    "apikey": ["ada-api"]
+    "apikey": [
+      "ada-api"
+    ]
   },
   "categories": [
     {
@@ -94,5 +96,6 @@
         }
       ]
     }
-  ]
+  ],
+  "copyBaseUrl": "https://ada-api-vace.vercel.app"
 }

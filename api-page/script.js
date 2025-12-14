@@ -1,4 +1,4 @@
-// Ada API Console – script.js (FIXED: Rendering & Clean Code)
+// Ada API Console – script.js (FIXED: Visible Content & Animation)
 
 document.addEventListener("DOMContentLoaded", () => {
   // ================================
@@ -34,13 +34,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const modalInstance = DOM.modalEl ? new bootstrap.Modal(DOM.modalEl) : null;
 
-  // FIX: Anti-Stuck Scroll saat modal ditutup
+  // FIX: Anti-Stuck Scroll
   if (DOM.modalEl) {
     DOM.modalEl.addEventListener('hidden.bs.modal', () => {
         DOM.body.style.overflow = ''; 
         DOM.body.style.paddingRight = '';
-        const backdrops = document.querySelectorAll('.modal-backdrop');
-        backdrops.forEach(bd => bd.remove());
+        document.querySelectorAll('.modal-backdrop').forEach(bd => bd.remove());
     });
   }
 
@@ -59,11 +58,10 @@ document.addEventListener("DOMContentLoaded", () => {
   function saveJSON(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
   function appendLog(msg) { 
       if(DOM.logsConsole) DOM.logsConsole.textContent += `> ${msg}\n`; 
-      console.log(`[LOG] ${msg}`);
   }
 
   // ================================
-  // 3. LOGIC SMART URL
+  // 3. LOGIC UTAMA (SMART URL & MODAL)
   // ================================
 
   function parseUrlParams(fullPath) {
@@ -94,10 +92,6 @@ document.addEventListener("DOMContentLoaded", () => {
     return decodeURIComponent(window.location.origin + pathname + (queryString ? `?${queryString}` : ""));
   }
 
-  // ================================
-  // 4. OPEN MODAL & FORM BUILDER
-  // ================================
-
   window.openApiModal = function(item) {
     currentApiItem = item;
     dynamicParams = {}; 
@@ -108,7 +102,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (DOM.modalTitle) DOM.modalTitle.textContent = item.name || "Endpoint";
     if (DOM.modalSubtitle) DOM.modalSubtitle.textContent = item.desc || "";
     
-    // Fitur 1: Smart Copy Link
+    // Smart Copy Link
     if(DOM.endpointText) {
         DOM.endpointText.textContent = getDeveloperTemplateUrl(item);
     }
@@ -118,7 +112,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (DOM.apiResponseContent) DOM.apiResponseContent.innerHTML = "";
     if (DOM.modalLoading) DOM.modalLoading.classList.add("d-none");
 
-    // Fitur 2: Auto-Fill Form
+    // Auto-Fill Form
     const { searchParams: defaultValues } = parseUrlParams(item.path || "");
     const paramsConfig = item.params || {};
     let formHtml = '';
@@ -179,7 +173,7 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // ================================
-  // 5. SEND REQUEST & SMART DOWNLOAD
+  // 4. REQUEST & DOWNLOADER
   // ================================
 
   async function sendApiRequest() {
@@ -204,7 +198,7 @@ document.addEventListener("DOMContentLoaded", () => {
       const contentType = res.headers.get("content-type");
       let htmlOutput = "";
 
-      // Fitur 3: Media UI
+      // Media UI
       if (contentType && (contentType.includes("audio") || contentType.includes("video") || contentType.includes("image"))) {
          const blob = await res.blob();
          const mediaUrl = URL.createObjectURL(blob);
@@ -231,7 +225,7 @@ document.addEventListener("DOMContentLoaded", () => {
         const pretty = json ? JSON.stringify(json, null, 2) : text;
         htmlOutput = `<pre style="font-size:0.75rem; background:#1e1e1e; color:#a6e22e; padding:15px; border-radius:8px; overflow:auto;">${pretty}</pre>`;
 
-        // Deteksi Link Download di JSON
+        // Deteksi Link
         let downloadLink = null;
         if(json) {
             const target = json.result || json.data || json;
@@ -264,29 +258,31 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // 6. INIT & RENDER
+  // 5. RENDER SYSTEM
   // ================================
 
   async function loadSettings() {
     try {
-      // Pastikan path benar. Biasanya /src/settings.json jika folder src ada di root publik
       const res = await fetch("/src/settings.json");
-      if(!res.ok) throw new Error(`Gagal load (${res.status})`);
-      settings = await res.json();
+      if(!res.ok) throw new Error(`HTTP Error ${res.status}`);
       
+      settings = await res.json();
       renderApiCategories(settings.categories);
       
       if(DOM.versionBadge && settings.version) DOM.versionBadge.textContent = settings.version;
-      appendLog("System Ready.");
+      
+      // CRITICAL FIX: Panggil animasi setelah render
+      setTimeout(initScrollReveal, 100); 
+
     } catch (e) {
       console.error(e);
-      // Tampilkan error visual jika settings gagal
+      // Tampilkan error di layar biar user tau kenapa kosong
       if(DOM.apiContent) {
           DOM.apiContent.innerHTML = `
-          <div class="alert alert-danger text-center">
-            <strong>Gagal Memuat settings.json</strong><br>
-            Pastikan file JSON valid (tidak ada koma berlebih/kurang, tidak ada komentar).<br>
-            <small>${e.message}</small>
+          <div style="text-align:center; padding:2rem; color: #d05555;">
+            <h4><i class="fas fa-exclamation-triangle"></i> Gagal Memuat Data</h4>
+            <p>File <code>settings.json</code> tidak ditemukan atau format salah.</p>
+            <pre style="background:rgba(0,0,0,0.1); padding:0.5rem; display:inline-block; border-radius:5px;">${e.message}</pre>
           </div>`;
       }
     }
@@ -296,11 +292,9 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!DOM.apiContent || !categories) return;
     DOM.apiContent.innerHTML = "";
     
-    // FIX: Render Filter Button secara benar
+    // Filter Buttons
     if(DOM.apiFilters) {
-        DOM.apiFilters.innerHTML = ""; // Clear
-        
-        // Buat Tombol "Semua"
+        DOM.apiFilters.innerHTML = "";
         const allBtn = document.createElement("button");
         allBtn.className = "filter-chip active";
         allBtn.textContent = "Semua";
@@ -311,7 +305,6 @@ document.addEventListener("DOMContentLoaded", () => {
         };
         DOM.apiFilters.appendChild(allBtn);
 
-        // Buat Tombol Kategori Lain
         categories.forEach(cat => {
             const btn = document.createElement("button");
             btn.className = "filter-chip";
@@ -327,7 +320,6 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
 
-    // Render Kartu
     const row = document.createElement("div");
     row.className = "row";
     
@@ -355,13 +347,16 @@ document.addEventListener("DOMContentLoaded", () => {
                </div>
              </article>
             `;
-            
             col.querySelector(".api-open-btn").addEventListener("click", () => openApiModal(item));
             row.appendChild(col);
         });
     });
     DOM.apiContent.appendChild(row);
   }
+
+  // ================================
+  // 6. UI HELPERS (Animation, Sidebar, History)
+  // ================================
 
   function addHistory(item) {
      historyItems.unshift({ name: item.name, path: item.path, ts: new Date().toISOString() });
@@ -395,11 +390,28 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // Init Calls
-  function initSidebar() { /* ...logic sidebar standar... */ }
-  // (Sidebar logic diabaikan di sini agar kode tidak kepanjangan, 
-  //  tapi DOM.menuToggle dkk sudah ada di atas jika kamu mau pasang lagi)
-  
+  // IMPORTANT: Fungsi ini yang bikin konten muncul (opacity 0 -> 1)
+  function initScrollReveal() {
+    const revealEls = document.querySelectorAll(".reveal");
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("reveal-visible");
+          }
+        });
+      },
+      { threshold: 0.05 }
+    );
+    revealEls.forEach((el) => observer.observe(el));
+    
+    // Fallback: Paksa muncul jika observer gagal/lambat
+    setTimeout(() => {
+        revealEls.forEach(el => el.classList.add("reveal-visible"));
+    }, 500);
+  }
+
+  // Sidebar Init
   if (DOM.menuToggle) {
       DOM.menuToggle.addEventListener("click", () => {
          DOM.sideNav.classList.add("open");
@@ -414,7 +426,6 @@ document.addEventListener("DOMContentLoaded", () => {
          if (DOM.sidebarBackdrop) DOM.sidebarBackdrop.classList.remove("show");
       });
   }
-
   if (DOM.searchInput) {
       DOM.searchInput.addEventListener("input", (e) => {
         const query = e.target.value.toLowerCase();
@@ -424,7 +435,8 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
+  // START
   initCopyEvents();
   renderHistory();
-  loadSettings(); // START
+  loadSettings(); 
 });

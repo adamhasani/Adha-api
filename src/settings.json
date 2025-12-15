@@ -3,12 +3,13 @@
   "version": "v1.0.0",
   "description": "Simple and easy to use API console for Ada API.",
   "bannerImage": "/src/banner.gif",
-  "header": {
-    "status": "Online!"
-  },
 
   "apiBaseUrl": "https://ada-api-vace.vercel.app",
   "copyBaseUrl": "https://ada-api-vace.vercel.app",
+
+  "header": {
+    "status": "Online!"
+  },
 
   "apiSettings": {
     "creator": "Ada",
@@ -21,61 +22,40 @@
       "items": [
         {
           "name": "LuminAI",
-          "desc": "Talk with LuminAI. Contoh: text=halo dari web",
-          "path": "/ai/luminai?text=halo dari web",
+          "desc": "Chat dengan LuminAI. Contoh: text=halo dari web",
+          "path": "/ai/luminai?text=halo",
           "status": "ready",
           "method": "GET",
           "params": {
-            "text": "Text for luminai to respond to"
-          }
-        },
-        {
-          "name": "HydroMind",
-          "desc": "Chat AI via HydroMind. Contoh: text=halo; model=isi sesuai daftar di mind.hydrooo.web.id",
-          "path": "/ai/hydromind?text=halo dari web&model=gpt-4o",
-          "status": "ready",
-          "method": "GET",
-          "params": {
-            "text": "Teks atau perintah untuk chat AI",
-            "model": "See the list of supported AI models here: https://mind.hydrooo.web.id"
+            "text": "Text input"
           }
         }
       ]
     },
+
     {
       "name": "Downloader",
       "items": [
         {
           "name": "YouTube MP3",
-          "desc": "Download Audio YouTube via Link.",
-          "path": "/api/download/ytmp3?url=https%3A%2F%2Fyoutu.be%2Fna8A4-fapww%3Fsi%3DsFu7VY0yzsUyLeTg",
+          "desc": "Download audio dari YouTube (klik START untuk menjalankan).",
+          "path": "/api/download/ytmp3?url=https%3A%2F%2Fyoutu.be%2FVIDEO_ID",
           "status": "ready",
           "method": "GET",
           "params": {
-            "url": "Link YouTube (Contoh: https://youtu.be/...)"
+            "url": "YouTube video URL"
           }
         }
       ]
     },
-    {
-      "name": "Random",
-      "items": [
-        {
-          "name": "Blue Archive",
-          "desc": "Blue Archive random images.",
-          "path": "/random/ba",
-          "status": "ready",
-          "method": "GET"
-        }
-      ]
-    },
+
     {
       "name": "Search Tools",
       "items": [
         {
-          "name": "YouTube",
-          "desc": "Video search. Contoh: q=lofi hip hop",
-          "path": "/search/youtube?q=lofi hip hop",
+          "name": "YouTube Search",
+          "desc": "Cari video YouTube (klik START untuk menjalankan).",
+          "path": "/search/youtube?q=lofi%20hip%20hop",
           "status": "ready",
           "method": "GET",
           "params": {
@@ -84,20 +64,34 @@
         }
       ]
     },
+
+    {
+      "name": "Random",
+      "items": [
+        {
+          "name": "Blue Archive",
+          "desc": "Random Blue Archive image.",
+          "path": "/random/ba",
+          "status": "ready",
+          "method": "GET"
+        }
+      ]
+    },
+
     {
       "name": "Tools",
       "items": [
         {
           "name": "Tourl (Upload)",
-          "desc": "Upload File/Gambar menjadi Link URL (Auto Fallback Catbox/Yupra).",
+          "desc": "Upload file menjadi URL.",
           "path": "/api/tools/tourl",
           "status": "ready",
           "method": "POST",
           "params": {
-            "file": "Media (Image/Video/Doc)"
+            "file": "File upload"
           }
         }
       ]
     }
   ]
-}}
+}

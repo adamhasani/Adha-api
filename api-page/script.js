@@ -1,4 +1,4 @@
-// Ada API Console â€“ script utama (nyambung ke index.html + src/settings.json)
+// Ada API Console Ã¢â‚¬â€œ script utama (nyambung ke index.html + src/settings.json)
 // Versi FULL: Original Structure + Smart Upload & Image Support
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.textContent = "Error";
     } else if (s === "checking") {
       el.classList.add("status-unknown");
-      el.textContent = "Checkingâ€¦";
+      el.textContent = "CheckingÃ¢â‚¬Â¦";
     } else {
       el.classList.add("status-unknown");
       el.textContent = "Unknown";
@@ -739,7 +739,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!url) return;
 
     if (DOM.modalStatusLine) {
-      DOM.modalStatusLine.textContent = "Mengirim permintaanâ€¦";
+      DOM.modalStatusLine.textContent = "Mengirim permintaanÃ¢â‚¬Â¦";
     }
     if (DOM.modalLoading) DOM.modalLoading.classList.remove("d-none");
     if (!fileData) {
@@ -846,7 +846,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // REQUEST BOX â†’ WHATSAPP
+  // REQUEST BOX Ã¢â€ â€™ WHATSAPP
   // ================================
   function initRequestBox() {
     if (!DOM.apiRequestInput || !DOM.sendApiRequest) return;
@@ -911,7 +911,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // SETTINGS.JSON â†’ HERO & API
+  // SETTINGS.JSON Ã¢â€ â€™ HERO & API
   // ================================
   function applySettingsToHero() {
     if (!settings) return;
@@ -952,7 +952,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initScrollReveal();
     renderHistory();
 
-    appendLog("Menyiapkan konsol Ada APIâ€¦");
+    appendLog("Menyiapkan konsol Ada APIÃ¢â‚¬Â¦");
     await loadSettings();
     appendLog("Ada API Console siap.");
   }

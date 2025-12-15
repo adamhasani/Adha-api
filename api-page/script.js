@@ -1,4 +1,4 @@
-// Ada API Console Ã¢â‚¬â€œ script utama (nyambung ke index.html + src/settings.json)
+// Ada API Console â€“ script utama (nyambung ke index.html + src/settings.json)
 // Versi FULL: Original Structure + Smart Upload & Image Support
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -615,7 +615,7 @@ document.addEventListener("DOMContentLoaded", () => {
       el.textContent = "Error";
     } else if (s === "checking") {
       el.classList.add("status-unknown");
-      el.textContent = "CheckingÃ¢â‚¬Â¦";
+      el.textContent = "Checkingâ€¦";
     } else {
       el.classList.add("status-unknown");
       el.textContent = "Unknown";
@@ -722,10 +722,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 sendApiRequest(input.files[0]);
             };
         }
-    } else {
-        // Jika GET biasa, langsung eksekusi otomatis
-        sendApiRequest();
     }
+// GET: preview only (no auto-run)
+
   }
 
   async function sendApiRequest(fileData = null) {
@@ -739,7 +738,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!url) return;
 
     if (DOM.modalStatusLine) {
-      DOM.modalStatusLine.textContent = "Mengirim permintaanÃ¢â‚¬Â¦";
+      DOM.modalStatusLine.textContent = "Mengirim permintaanâ€¦";
     }
     if (DOM.modalLoading) DOM.modalLoading.classList.remove("d-none");
     if (!fileData) {
@@ -823,7 +822,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (DOM.copyEndpointBtn && DOM.endpointText) {
       DOM.copyEndpointBtn.addEventListener("click", async () => {
         try {
-          await navigator.clipboard.writeText(DOM.endpointText.textContent);
+          await navigator.clipboard.writeText((settings && settings.copyBaseUrl ? settings.copyBaseUrl : `${location.protocol}//${location.host}`) + DOM.endpointText.textContent.trim());
         } catch {
           // ignore
         }
@@ -846,7 +845,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // REQUEST BOX Ã¢â€ â€™ WHATSAPP
+  // REQUEST BOX â†’ WHATSAPP
   // ================================
   function initRequestBox() {
     if (!DOM.apiRequestInput || !DOM.sendApiRequest) return;
@@ -911,7 +910,7 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ================================
-  // SETTINGS.JSON Ã¢â€ â€™ HERO & API
+  // SETTINGS.JSON â†’ HERO & API
   // ================================
   function applySettingsToHero() {
     if (!settings) return;
@@ -952,7 +951,7 @@ document.addEventListener("DOMContentLoaded", () => {
     initScrollReveal();
     renderHistory();
 
-    appendLog("Menyiapkan konsol Ada APIÃ¢â‚¬Â¦");
+    appendLog("Menyiapkan konsol Ada APIâ€¦");
     await loadSettings();
     appendLog("Ada API Console siap.");
   }

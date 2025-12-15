@@ -525,19 +525,6 @@ document.addEventListener("DOMContentLoaded", () => {
     favBtn.addEventListener("click", () => toggleFav(item.path, favBtn));
     tryBtn.addEventListener("click", () => openApiModal(item));
 
-    // START button on card (manual)
-    const startBtn = document.createElement("button");
-    startBtn.type = "button";
-    startBtn.className = "api-start-btn";
-    startBtn.innerHTML = '<i class="fas fa-play-circle me-1"></i>Start';
-    actions.appendChild(startBtn);
-
-    startBtn.addEventListener("click", () => {
-      currentApiItem = item;
-      sendApiRequest();
-    });
-
-
     return col;
   }
 

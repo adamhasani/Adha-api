@@ -525,6 +525,19 @@ document.addEventListener("DOMContentLoaded", () => {
     favBtn.addEventListener("click", () => toggleFav(item.path, favBtn));
     tryBtn.addEventListener("click", () => openApiModal(item));
 
+    // START button on card (manual)
+    const startBtn = document.createElement("button");
+    startBtn.type = "button";
+    startBtn.className = "api-start-btn";
+    startBtn.innerHTML = '<i class="fas fa-play-circle me-1"></i>Start';
+    actions.appendChild(startBtn);
+
+    startBtn.addEventListener("click", () => {
+      currentApiItem = item;
+      sendApiRequest();
+    });
+
+
     return col;
   }
 
@@ -820,62 +833,13 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function initModalEvents() {
-
-  // ================================
-  // FILTER NORMALIZE (ONLY DOWNLOAD)
-  // ================================
-  function shouldNormalizeForCopy(item) {
-    return (
-      item &&
-      item.method === "GET" &&
-      typeof item.path === "string" &&
-      item.path.includes("/download/") &&
-      item.path.includes("url=")
-    );
-  }
-
-  // ================================
-  // NORMALIZE ENDPOINT FOR COPY
-  // ================================
-  function normalizeEndpointForCopy(path) {
-    try {
-      const [base, query] = path.split("?");
-      if (!query) return path;
-
-      const params = new URLSearchParams(query);
-      if (params.has("url")) {
-        params.set("url", "{LINK_YT}");
-      }
-
-      return base + "?" + params.toString();
-    } catch {
-      return path;
-    }
-  }
-
-    if (DOM.copyEndpointBtn) {
-      DOM.copyEndpointBtn.addEventListener("click", async (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        if (!currentApiItem || !settings) return;
-
-        let path = currentApiItem.path || "";
-
-        if (shouldNormalizeForCopy(currentApiItem)) {
-          path = normalizeEndpointForCopy(path);
-        }
-
-        const baseUrl =
-          settings.copyBaseUrl ||
-          (window.location.origin && window.location.origin !== "null"
-            ? window.location.origin
-            : "");
-
-        const full = baseUrl + path;
-
+    if (DOM.copyEndpointBtn && DOM.endpointText) {
+      DOM.copyEndpointBtn.addEventListener("click", async () => {
         try {
-          await navigator.clipboard.writeText(full);
-        } catch {}
+          await navigator.clipboard.writeText(DOM.endpointText.textContent);
+        } catch {
+          // ignore
+        }
       });
     }
 
